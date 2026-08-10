@@ -13,10 +13,9 @@ for tool in git node npm; do
   command -v "$tool" >/dev/null || { echo "ERROR: $tool required but not on PATH"; exit 1; }
 done
 
-echo "Installing $PKG ..."
-npm install -g "$PKG"
-echo "kilo version: $(kilo --version)"
-
+# Back up before the CLI install: the first kilo invocation (the version
+# check below) auto-creates a skeleton ~/.config/kilo, which would otherwise
+# get backed up as if it were prior user state.
 CFG="$HOME/.config/kilo"
 KILO="$HOME/.kilo"
 for d in "$CFG" "$KILO"; do
@@ -25,6 +24,10 @@ for d in "$CFG" "$KILO"; do
     cp -r "$d" "$d.bak-$STAMP"
   fi
 done
+
+echo "Installing $PKG ..."
+npm install -g "$PKG"
+echo "kilo version: $(kilo --version)"
 mkdir -p "$CFG/agents" "$KILO/skill-repos" "$KILO/skills"
 cp "$REPO_ROOT/config/kilo.jsonc" "$CFG/"
 cp "$REPO_ROOT/config/instructions.md" "$CFG/"
@@ -67,7 +70,9 @@ echo "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/ki
 
 echo ""
 echo "== Agent roster =="
-kilo agent list 2>&1 | grep -E '^\S+ \((primary|subagent|all)\)' || true
+# no 2>&1: first-run migration progress arrives on stderr and should stream
+# to the console; roster lines are on stdout
+kilo agent list | grep -E '^\S+ \((primary|subagent|all)\)' || true
 echo ""
 echo "Done. Expected custom agents: conductor, planner, coder, opus-coder, verifier."
 echo 'Try:  kilo run --dir <repo> --auto "your task"'
