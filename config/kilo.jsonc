@@ -1,0 +1,156 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+
+  // Every session starts in the multi-agent pipeline unless --agent says
+  // otherwise. Falls back to built-in "code" if conductor is ever invalid.
+  "default_agent": "conductor",
+
+  // Cheap default. The pipeline pins its own models per agent:
+  // conductor/coder = google/gemini-3.6-flash, planner/verifier =
+  // anthropic/claude-opus-5 (see ~/.config/kilo/agents/*.md).
+  "model": "google/gemini-3.6-flash",
+  "small_model": "google/gemini-3.6-flash",
+  "instructions": ["~/.config/kilo/instructions.md"],
+
+  // Provider-native web search for all models (billed to the API keys).
+  "web_search": true,
+
+  // Own API keys only - no Kilo gateway/account. Keys live in user-scope
+  // env vars, never in this file.
+  "provider": {
+    "google": { "env": ["GOOGLE_GENERATIVE_AI_API_KEY"] },
+    "anthropic": { "options": { "apiKey": "{env:ANTHROPIC_API_KEY}" } }
+  },
+  "enabled_providers": ["google", "anthropic"],
+
+  "formatter": true,
+  "lsp": true,
+
+  // Skills load from ~/.kilo/skills (default path) - a curated pool of 14.
+  // Update via ~/.kilo/update-skills.ps1 (pulls repos, re-copies curated set).
+
+  // Pin the built-in subagents and internal jobs (title/summary/compaction)
+  // to the cheap model so an Opus caller never silently fans out at Opus
+  // prices and housekeeping never burns Opus tokens.
+  "agent": {
+    "explore": { "model": "google/gemini-3.6-flash" },
+    "general": { "model": "google/gemini-3.6-flash" },
+    "title": { "model": "google/gemini-3.6-flash" },
+    "summary": { "model": "google/gemini-3.6-flash" },
+    "compaction": { "model": "google/gemini-3.6-flash" },
+    // Kilo's deprecated built-in orchestrator: a name-trap next to our
+    // conductor in the agent picker - it hijacked a run once (generic
+    // delegation, no pipeline discipline). Keep it off.
+    "orchestrator": { "disable": true }
+  },
+
+  // Web search/scrape via Firecrawl MCP; key from user-scope env var.
+  // Local stdio keeps the key out of URLs, logs, and `kilo mcp list`.
+  "mcp": {
+    "firecrawl": {
+      "type": "local",
+      "command": ["npx", "-y", "firecrawl-mcp"],
+      "environment": { "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}" },
+      "enabled": true,
+      "timeout": 60000
+    }
+  },
+
+  // Context economy: trim old tool outputs, auto-compact long sessions.
+  "compaction": { "auto": true, "prune": true },
+
+  // Policy: allow or deny only - never ask. Sessions run unattended.
+  // Last matching rule wins.
+  "permission": {
+    "*": "allow",
+    "task": { "*": "allow" },
+    "doom_loop": "deny",
+
+    // Firecrawl registers ~25 tools; denied ones are withheld from the
+    // model, saving their schema tokens on every request.
+    "firecrawl_firecrawl_*": "deny",
+    "firecrawl_firecrawl_search": "allow",
+    "firecrawl_firecrawl_scrape": "allow",
+    "firecrawl_firecrawl_map": "allow",
+
+    "read": {
+      "*": "allow",
+      "**/.ssh/**": "deny", "**/.aws/**": "deny", "**/.gnupg/**": "deny",
+      "**/id_rsa*": "deny", "*.pem": "deny",
+      "*.env": "deny", "*.env.*": "deny", "*.env.example": "allow"
+    },
+
+    "edit": {
+      "*": "allow",
+      ".git/**": "deny", "**/node_modules/**": "deny", "**/.venv/**": "deny",
+      "*.env": "deny", "*.env.*": "deny",
+      "kilo.json": "deny", "kilo.jsonc": "deny", ".kilo/**": "deny",
+      "~/.kilo/**": "deny", "~/.config/kilo/**": "deny"
+    },
+
+    "write": {
+      "*": "allow",
+      ".git/**": "deny", "*.env": "deny", "*.env.*": "deny",
+      "kilo.json": "deny", "kilo.jsonc": "deny", ".kilo/**": "deny",
+      "~/.kilo/**": "deny", "~/.config/kilo/**": "deny"
+    },
+
+    "bash": {
+      "*": "allow",
+
+      "Remove-Item*": "deny", "Clear-Content*": "deny", "Clear-Item*": "deny",
+      "ri *": "deny", "rm *": "deny", "rd *": "deny", "rmdir*": "deny",
+      "del *": "deny", "erase*": "deny",
+
+      "git push --force*": "deny", "git push -f*": "deny",
+      "git reset --hard*": "deny", "git clean*": "deny",
+      "git filter-branch*": "deny", "git config --global*": "deny",
+
+      "Invoke-Expression*": "deny", "iex*": "deny", "Invoke-Command*": "deny",
+      "Invoke-Item*": "deny", "Start-Process*": "deny", "Add-Type*": "deny",
+      "powershell*": "deny", "pwsh*": "deny", "cmd*": "deny",
+      "Set-ExecutionPolicy*": "deny",
+
+      "Invoke-WebRequest*": "deny", "Invoke-RestMethod*": "deny",
+      "iwr*": "deny", "irm*": "deny", "curl*": "deny", "wget*": "deny",
+      "ssh*": "deny", "scp*": "deny",
+
+      "npm publish*": "deny", "npm login*": "deny", "gh auth*": "deny",
+      "gh secret*": "deny", "gh repo delete*": "deny", "gh release*": "deny",
+      "cargo publish*": "deny", "twine*": "deny", "gem push*": "deny",
+      "dotnet nuget push*": "deny", "mvn deploy*": "deny",
+      "Get-Credential*": "deny", "aws*": "deny", "az*": "deny", "gcloud*": "deny",
+
+      "Stop-Process*": "deny", "taskkill*": "deny", "Stop-Service*": "deny",
+      "Start-Service*": "deny", "Set-Service*": "deny", "New-Service*": "deny",
+      "sc.exe*": "deny", "Restart-Computer*": "deny", "Stop-Computer*": "deny",
+      "shutdown*": "deny", "Set-ItemProperty*": "deny",
+      "New-ItemProperty*": "deny", "Remove-ItemProperty*": "deny",
+      "reg *": "deny", "reg.exe*": "deny", "Set-Acl*": "deny",
+      "icacls*": "deny", "takeown*": "deny", "net user*": "deny",
+      "net localgroup*": "deny", "schtasks*": "deny",
+      "Register-ScheduledTask*": "deny", "Set-MpPreference*": "deny",
+      "Add-MpPreference*": "deny", "netsh*": "deny", "wmic*": "deny",
+      "diskpart*": "deny", "fsutil*": "deny", "vssadmin*": "deny",
+      "format*": "deny", "bcdedit*": "deny",
+
+      // Local HTTP is a normal dev loop (smoke-testing servers); these
+      // narrower rules come after the network denies so they win.
+      "curl *localhost*": "allow", "curl *127.0.0.1*": "allow",
+      "wget *localhost*": "allow", "wget *127.0.0.1*": "allow",
+      "Invoke-WebRequest *localhost*": "allow", "Invoke-WebRequest *127.0.0.1*": "allow",
+      "Invoke-RestMethod *localhost*": "allow", "Invoke-RestMethod *127.0.0.1*": "allow",
+      "iwr *localhost*": "allow", "irm *localhost*": "allow",
+      "iwr *127.0.0.1*": "allow", "irm *127.0.0.1*": "allow"
+    },
+
+    // Deny-all clobbers Kilo's injected per-skill allows (config loads after
+    // built-in defaults), so skill/tmp paths must be re-allowed explicitly.
+    "external_directory": {
+      "*": "deny",
+      "~/.kilo/skills/**": "allow",
+      "~/.kilo/skill-repos/**": "allow",
+      "~/AppData/Local/Temp/kilo/**": "allow"
+    }
+  }
+}
