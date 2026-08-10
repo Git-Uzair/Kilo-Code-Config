@@ -106,6 +106,15 @@ Check for a relevant skill before starting. Say which skill you are using.
   search tool (rate-limited - batch queries); reading a known URL = webfetch.
 - A denied command is policy, not an error to work around. Find another way
   or report the limitation.
+- Search-tool ceiling (Windows, kilo 7.4.20): the built-in `grep` tool hangs
+  the session forever - no timeout, unrecoverable - whenever a pattern
+  matches more than 100 lines (the internal match cap; the over-limit
+  truncation path trips a Bun 1.3.14 runtime bug; `glob` shares the code
+  path, so keep it specific too). Keep grep patterns narrow: anchor them
+  (`\bdef apply_edits\b`, not `edits`), scope `path` tight, filter with
+  `include`. Unsure of the match volume? Count first in bash:
+  `(Select-String -Path <file> -Pattern '<regex>').Count` - if it is near
+  or over 100, narrow the pattern or read the file in ranges instead.
 
 ## Work out how to build and test the project
 
