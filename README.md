@@ -40,14 +40,14 @@ stall on prompts. A hardened deny-list blocks the destructive stuff outright
 
 ```powershell
 # Windows
-git clone <THIS-REPO-URL> kilo-config
+git clone https://github.com/Git-Uzair/Kilo-Code-Config.git kilo-config
 cd kilo-config
 ./install.ps1            # pins @kilocode/cli@7.4.20 (tested); -Latest for newest
 ```
 
 ```bash
 # macOS / Linux
-git clone <THIS-REPO-URL> kilo-config
+git clone https://github.com/Git-Uzair/Kilo-Code-Config.git kilo-config
 cd kilo-config && ./install.sh
 ```
 
