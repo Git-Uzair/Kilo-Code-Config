@@ -112,10 +112,17 @@ Each of these cost a broken run to learn; the config encodes the fix:
   forms plus disposable detached worktrees (`.worktrees/`) for at-base and
   mutated-state testing.
 - **Long-session hygiene**: Kilo 7.4.20 embeds Bun 1.3.14, which has a known
-  Windows FFI crash on long-running TUI sessions
+  Windows runtime defect on long-running TUI sessions
   ([bun#31941](https://github.com/oven-sh/bun/issues/31941), fixed in Bun
-  1.4.0, not yet shipped in a Kilo build). Restart sessions every few hours;
-  the plan-file + commit-per-task design makes resuming free.
+  1.4.0, not yet shipped in a Kilo build). Besides crashing outright, it can
+  silently lose a tool call's completion mid-session: the call spins forever
+  (`status: "running"` in the `part` table, no child process, no error
+  event) and the pipeline blocks on it. Observed ~50 minutes into a run, on
+  a grep whose identical input completes instantly in a fresh session; no
+  config-level tool timeout exists to self-heal it. Recovery: Esc aborts the
+  hung turn, then have the conductor dispatch a fresh task. Restart sessions
+  every hour or two; the plan-file + commit-per-task design makes resuming
+  free.
 
 ## What's in the box
 
