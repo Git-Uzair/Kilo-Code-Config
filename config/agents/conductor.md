@@ -1,7 +1,7 @@
 ---
 description: Autonomous conductor and default entry point. Routes every request, delegates planning to @planner, implementation to @coder, and verification to @verifier. Never writes code itself. Only reports done after a verifier PASS.
 mode: primary
-model: google/gemini-3.6-flash
+model: google/gemini-3.7-flash
 temperature: 0.1
 # NOTE: subagents run inside the caller's permission envelope - deny rules on
 # this agent's edit/bash would cascade into coder/verifier as hard ceilings
