@@ -6,10 +6,10 @@
   "default_agent": "conductor",
 
   // Cheap default. The pipeline pins its own models per agent:
-  // conductor/coder = google/gemini-3.6-flash, planner/verifier =
+  // conductor/coder = google/gemini-3.7-flash, planner/verifier =
   // anthropic/claude-opus-5 (see ~/.config/kilo/agents/*.md).
-  "model": "google/gemini-3.6-flash",
-  "small_model": "google/gemini-3.6-flash",
+  "model": "google/gemini-3.7-flash",
+  "small_model": "google/gemini-3.7-flash",
   "instructions": ["~/.config/kilo/instructions.md"],
 
   // Provider-native web search for all models (billed to the API keys).
@@ -33,11 +33,11 @@
   // to the cheap model so an Opus caller never silently fans out at Opus
   // prices and housekeeping never burns Opus tokens.
   "agent": {
-    "explore": { "model": "google/gemini-3.6-flash" },
-    "general": { "model": "google/gemini-3.6-flash" },
-    "title": { "model": "google/gemini-3.6-flash" },
-    "summary": { "model": "google/gemini-3.6-flash" },
-    "compaction": { "model": "google/gemini-3.6-flash" },
+    "explore": { "model": "google/gemini-3.7-flash" },
+    "general": { "model": "google/gemini-3.7-flash" },
+    "title": { "model": "google/gemini-3.7-flash" },
+    "summary": { "model": "google/gemini-3.7-flash" },
+    "compaction": { "model": "google/gemini-3.7-flash" },
     // Kilo's deprecated built-in orchestrator: a name-trap next to our
     // conductor in the agent picker - it hijacked a run once (generic
     // delegation, no pipeline discipline). Keep it off.
