@@ -11,9 +11,9 @@ No Kilo account or gateway required - you bring your own API keys.
 
 | Agent | Model | Role |
 |---|---|---|
-| **conductor** | gemini-3.6-flash | Default entry point. Routes work, drives the loop, never writes code. |
+| **conductor** | gemini-3.7-flash | Default entry point. Routes work, drives the loop, never writes code. |
 | **planner** | claude-opus-5 | Researches the repo, writes an exhaustive plan file section-by-section, tags each task `EASY`/`HARD`. |
-| **coder** | gemini-3.6-flash | First-line implementer: failing test first, minimal diff, commit per task. |
+| **coder** | gemini-3.7-flash | First-line implementer: failing test first, minimal diff, commit per task. |
 | **opus-coder** | claude-opus-5 | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
 | **verifier** | claude-opus-5 | Adversarial gate: runs the suite, probes edge cases empirically, audits scope/tests/secrets, emits `VERDICT: PASS/FAIL`. |
 
