@@ -112,10 +112,22 @@ Each of these cost a broken run to learn; the config encodes the fix:
   forms plus disposable detached worktrees (`.worktrees/`) for at-base and
   mutated-state testing.
 - **Long-session hygiene**: Kilo 7.4.20 embeds Bun 1.3.14, which has a known
-  Windows FFI crash on long-running TUI sessions
+  Windows runtime defect
   ([bun#31941](https://github.com/oven-sh/bun/issues/31941), fixed in Bun
-  1.4.0, not yet shipped in a Kilo build). Restart sessions every few hours;
-  the plan-file + commit-per-task design makes resuming free.
+  1.4.0, not yet shipped in a Kilo build). Restart TUI sessions every few
+  hours; the plan-file + commit-per-task design makes resuming free.
+- **The grep tool hangs forever past 100 matches (Windows)**: kilo's `grep`
+  caps results at an internal `MAX_SEARCH_LIMIT` of 100 (the `limit` param
+  cannot exceed it), and the over-limit truncation path loses the search's
+  completion on Windows - the call stays `"running"` forever with no child
+  process, no error event, and no timeout, wedging the pipeline while the
+  TUI keeps rendering. Deterministic and repo-independent: 90 matching lines
+  returns, 150 hangs, in a fresh session on a scratch repo. Diagnose via the
+  `part` table in `~/.local/share/kilo/kilo.db` (the stuck call keeps
+  `"status":"running"`). The standing instructions therefore require narrow
+  grep patterns and a bash pre-count when volume is uncertain; `glob` shares
+  the same truncation path, so keep it specific too. Recovery: Esc to abort
+  the hung turn, then dispatch a fresh task.
 
 ## What's in the box
 
