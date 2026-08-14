@@ -3,7 +3,7 @@
 A production-hardened global configuration for the [Kilo Code CLI](https://kilo.ai)
 that turns it into an unattended multi-agent engineering pipeline: point it at a
 repo, give it a task, walk away. Built and battle-tested on Windows 11 against
-Kilo CLI 7.4.20; the config itself is OS-agnostic.
+Kilo CLI 7.4.22; the config itself is OS-agnostic.
 
 No Kilo account or gateway required - you bring your own API keys.
 
@@ -42,7 +42,7 @@ stall on prompts. A hardened deny-list blocks the destructive stuff outright
 # Windows
 git clone https://github.com/Git-Uzair/Kilo-Code-Config.git kilo-config
 cd kilo-config
-./install.ps1            # pins @kilocode/cli@7.4.20 (tested); -Latest for newest
+./install.ps1            # pins @kilocode/cli@7.4.22 (tested); -Latest for newest
 ```
 
 ```bash

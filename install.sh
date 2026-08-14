@@ -2,7 +2,7 @@
 # Kilo multi-agent pipeline - macOS/Linux installer
 # Idempotent: backs up existing config first.
 set -euo pipefail
-PIN="7.4.20"
+PIN="7.4.22"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 PKG="@kilocode/cli@${PIN}"

@@ -4,7 +4,7 @@ param(
     [switch]$Latest  # install newest @kilocode/cli instead of the tested pin
 )
 $ErrorActionPreference = 'Stop'
-$pin = '7.4.20'
+$pin = '7.4.22'
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
@@ -57,7 +57,8 @@ foreach ($name in $sources.Keys) {
     if (Test-Path (Join-Path $dest '.git')) {
         Write-Host "Repo exists, pulling: $name"
         git -C $dest pull --ff-only
-    } else {
+    }
+    else {
         Write-Host "Cloning $name ..."
         git clone --depth 1 $sources[$name] $dest
     }
