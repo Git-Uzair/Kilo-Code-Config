@@ -124,11 +124,15 @@ Each of these cost a broken run to learn; the config encodes the fix:
   A region is not a secret, so it belongs in config where it is deterministic
   and survives a fresh clone with no extra setup step. Only the API key stays
   in the environment.
-- **`web_search: true` does not apply to the Opus agents on Bedrock.**
-  Provider-native web search is an Anthropic-API feature that Bedrock does not
-  expose, so planner/opus-coder/verifier get nothing from that flag - their
-  actual search path is the Firecrawl MCP. The flag is kept because the Gemini
-  agents still use it.
+- **`web_search: true` survives the move to Bedrock - it is not provider-native.**
+  The obvious assumption is that this flag maps to Anthropic's server-side
+  `web_search` tool, which Bedrock does not expose, and that moving the Opus
+  agents therefore costs them search. It does not. Kilo's `websearch` is its
+  own service (results carry a `sku_search` usage line), so it is
+  provider-agnostic. Verified on Bedrock: `websearch` is in the tool roster and
+  returns real results. The Opus agents keep all three search paths -
+  `websearch`, `webfetch` and the firecrawl MCP - and in practice reach for
+  `webfetch`/firecrawl first for a known URL, per the standing instructions.
 - **The `suggest` tool is denied for all subagents.** A trailing suggest call
   after a final report keeps the task spinning forever instead of returning.
 - **Kilo's deprecated built-in `orchestrator` is disabled.** It sits one Tab
