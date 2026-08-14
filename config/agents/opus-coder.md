@@ -1,7 +1,7 @@
 ---
 description: Escalation implementer on Claude Opus 5. Invoked by explicit user request, on plan tasks tagged HARD, or when the coder-verifier loop trips an escalation trigger (second failed cycle, repeated finding, gamed gate, conflicting criteria). Root-causes the prior failures first, then implements test-first. Expensive - surgical use only.
 mode: subagent
-model: anthropic/claude-opus-5
+model: amazon-bedrock/eu.anthropic.claude-opus-5
 # no temperature: claude-opus-5 does not accept one (registry: temperature false)
 # no steps cap: hitting it triggers Kilo's trailing-model-turn wrap-up, which
 # both providers now reject (kilocode #8260) - no agent in this setup sets steps.

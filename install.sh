@@ -64,9 +64,19 @@ copy_skills anthropic-skills frontend-design skill-creator webapp-testing
 echo ""
 echo "== Set your API keys (add to your shell profile) =="
 echo '  export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"'
-echo '  export ANTHROPIC_API_KEY="<your-anthropic-key>"'
+echo '  export AWS_BEARER_TOKEN_BEDROCK="<your-bedrock-api-key>"'
+echo '  export ANTHROPIC_API_KEY="<optional-anthropic-key>"'
 echo '  export FIRECRAWL_API_KEY="<optional-firecrawl-key>"'
 echo "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/kilo.jsonc)"
+echo ""
+echo "  Bedrock notes:"
+echo "    - Use a LONG-TERM Bedrock API key; short-term ones expire in <=12h."
+echo "    - Claude Opus 5 model access must be granted in the Bedrock console."
+echo "    - No AWS_REGION needed: the region is pinned in kilo.jsonc."
+echo "    - ANTHROPIC_API_KEY is optional - rollback path only."
+echo ""
+echo "  Already have a kilo TUI open? Restart it - a running process keeps the"
+echo "  environment it started with and will not see keys you set just now."
 
 echo ""
 echo "== Agent roster =="

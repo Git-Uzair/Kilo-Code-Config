@@ -1,7 +1,7 @@
 ---
 description: Adversarial verifier on Claude Opus 5. Independently checks the coder's changes - runs the suite, probes edge cases empirically, audits scope/tests/secrets/duplication against the plan - and ends with VERDICT PASS or FAIL. Can execute code but never modify it.
 mode: subagent
-model: anthropic/claude-opus-5
+model: amazon-bedrock/eu.anthropic.claude-opus-5
 # no temperature: claude-opus-5 does not accept one (registry: temperature false)
 # no steps cap: reaching it makes Kilo send an assistant-prefill wrap-up, which
 # Anthropic rejects on Claude 4.6+/5 (kilocode #8260, unfixed as of 7.4.20)

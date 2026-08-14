@@ -71,9 +71,22 @@ Copy-Item (Join-Path $repoRoot 'scripts\update-skills.ps1') $kiloDir -Force
 Write-Host ""
 Write-Host "== Set your API keys (user scope, new terminals pick them up) ==" -ForegroundColor Yellow
 Write-Host '  [Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")'
-Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<your-anthropic-key>","User")'
+Write-Host '  [Environment]::SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK","<your-bedrock-api-key>","User")'
+Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<optional-anthropic-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY","<optional-firecrawl-key>","User")'
 Write-Host "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/kilo.jsonc)"
+Write-Host ""
+Write-Host "  Bedrock notes:" -ForegroundColor Yellow
+Write-Host "    - Use a LONG-TERM Bedrock API key; short-term ones expire in <=12h."
+Write-Host "    - Use SetEnvironmentVariable above, not setx: setx truncates at 1024"
+Write-Host "      chars and a silently-truncated key fails auth with no clear cause."
+Write-Host "    - Claude Opus 5 model access must be granted in the Bedrock console."
+Write-Host "    - No AWS_REGION needed: the region is pinned in kilo.jsonc."
+Write-Host "    - ANTHROPIC_API_KEY is optional - rollback path only."
+Write-Host ""
+Write-Host "  Already have a kilo TUI open? Restart it." -ForegroundColor Yellow
+Write-Host "  A running process keeps the environment it started with and will not"
+Write-Host "  see keys you set just now."
 
 # 7. Verify
 Write-Host ""

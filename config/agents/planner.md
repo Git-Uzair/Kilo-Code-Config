@@ -1,7 +1,7 @@
 ---
 description: Implementation planner on Claude Opus 5. Researches the repo and writes the full implementation plan to docs/plans/ itself, section by section. Full tool access; by role it only ever creates plan documents, never source changes.
 mode: subagent
-model: anthropic/claude-opus-5
+model: amazon-bedrock/eu.anthropic.claude-opus-5
 # no temperature: claude-opus-5 does not accept one (registry: temperature false)
 # no steps cap: reaching it makes Kilo send an assistant-prefill wrap-up, which
 # Anthropic rejects on Claude 4.6+/5 (kilocode #8260, unfixed as of 7.4.20)

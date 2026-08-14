@@ -11,11 +11,17 @@ No Kilo account or gateway required - you bring your own API keys.
 
 | Agent | Model | Role |
 |---|---|---|
-| **conductor** | gemini-3.7-flash | Default entry point. Routes work, drives the loop, never writes code. |
-| **planner** | claude-opus-5 | Researches the repo, writes an exhaustive plan file section-by-section, tags each task `EASY`/`HARD`. |
-| **coder** | gemini-3.7-flash | First-line implementer: failing test first, minimal diff, commit per task. |
-| **opus-coder** | claude-opus-5 | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
-| **verifier** | claude-opus-5 | Adversarial gate: runs the suite, probes edge cases empirically, audits scope/tests/secrets, emits `VERDICT: PASS/FAIL`. |
+| **conductor** | gemini-3.7-flash *(Google)* | Default entry point. Routes work, drives the loop, never writes code. |
+| **planner** | claude-opus-5 *(Bedrock)* | Researches the repo, writes an exhaustive plan file section-by-section, tags each task `EASY`/`HARD`. |
+| **coder** | gemini-3.7-flash *(Google)* | First-line implementer: failing test first, minimal diff, commit per task. |
+| **opus-coder** | claude-opus-5 *(Bedrock)* | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
+| **verifier** | claude-opus-5 *(Bedrock)* | Adversarial gate: runs the suite, probes edge cases empirically, audits scope/tests/secrets, emits `VERDICT: PASS/FAIL`. |
+
+Opus runs through **Amazon Bedrock** on the EU inference profile
+(`amazon-bedrock/eu.anthropic.claude-opus-5`), not the Anthropic API. Same
+model, same list price, EU-pinned routing. The `anthropic` provider stays
+enabled purely as a rollback: flip the three `model:` lines in
+`config/agents/` back to `anthropic/claude-opus-5` and nothing else changes.
 
 Flow: request → plan (with per-task acceptance criteria) → implement → verify →
 loop on findings. Escalation to Opus fires on plan `HARD` tags or concrete
@@ -31,10 +37,18 @@ stall on prompts. A hardened deny-list blocks the destructive stuff outright
 
 - Node.js 20+ and git on PATH
 - Windows: PowerShell (7 recommended, 5.1 works). macOS/Linux: bash.
+- An AWS account with **Bedrock model access granted for Claude Opus 5** in an
+  EU region (Bedrock console -> Model access). This is an approval gate, not
+  instant - nothing Opus works until it clears.
 - API keys (set as env vars during install - never stored in this repo):
   - `GOOGLE_GENERATIVE_AI_API_KEY` - [Google AI Studio](https://aistudio.google.com)
-  - `ANTHROPIC_API_KEY` - [Anthropic Console](https://console.anthropic.com)
+  - `AWS_BEARER_TOKEN_BEDROCK` - a **long-term** Bedrock API key (AWS console). Short-term keys expire in <=12h and will kill an overnight run mid-flight.
+  - `ANTHROPIC_API_KEY` *(optional)* - only needed if you roll the Opus agents back to the Anthropic provider. The pipeline runs fine without it.
   - `FIRECRAWL_API_KEY` *(optional)* - powers the agents' web search via MCP; without it, remove the `mcp.firecrawl` block from `config/kilo.jsonc`
+
+No `AWS_REGION` needed - the region is pinned in `config/kilo.jsonc` under the
+`amazon-bedrock` provider. Change it there if you move regions, and keep the
+model IDs' geo prefix (`eu.`) in `config/agents/*.md` in step with it.
 
 ## Install
 
@@ -103,6 +117,18 @@ Each of these cost a broken run to learn; the config encodes the fix:
 - **Subagent sessions snapshot their permissions at spawn.** Config fixes
   never reach a resumed `task_id` - the conductor is instructed to dispatch
   fresh tasks instead, especially after any denial.
+- **Bedrock's region is pinned in `kilo.jsonc`, not `AWS_REGION`.** An env var
+  only reaches processes started *after* it was set, so a TUI already running
+  when the var is added inherits a stale environment: auth succeeds, region
+  does not, and every Opus subagent dies with `AWS region setting is missing`.
+  A region is not a secret, so it belongs in config where it is deterministic
+  and survives a fresh clone with no extra setup step. Only the API key stays
+  in the environment.
+- **`web_search: true` does not apply to the Opus agents on Bedrock.**
+  Provider-native web search is an Anthropic-API feature that Bedrock does not
+  expose, so planner/opus-coder/verifier get nothing from that flag - their
+  actual search path is the Firecrawl MCP. The flag is kept because the Gemini
+  agents still use it.
 - **The `suggest` tool is denied for all subagents.** A trailing suggest call
   after a final report keeps the task spinning forever instead of returning.
 - **Kilo's deprecated built-in `orchestrator` is disabled.** It sits one Tab

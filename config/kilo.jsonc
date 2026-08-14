@@ -6,8 +6,8 @@
   "default_agent": "conductor",
 
   // Cheap default. The pipeline pins its own models per agent:
-  // conductor/coder = google/gemini-3.7-flash, planner/verifier =
-  // anthropic/claude-opus-5 (see ~/.config/kilo/agents/*.md).
+  // conductor/coder = google/gemini-3.7-flash, planner/opus-coder/verifier =
+  // amazon-bedrock/eu.anthropic.claude-opus-5 (see ~/.config/kilo/agents/*.md).
   "model": "google/gemini-3.7-flash",
   "small_model": "google/gemini-3.7-flash",
   "instructions": ["~/.config/kilo/instructions.md"],
@@ -19,9 +19,24 @@
   // env vars, never in this file.
   "provider": {
     "google": { "env": ["GOOGLE_GENERATIVE_AI_API_KEY"] },
-    "anthropic": { "options": { "apiKey": "{env:ANTHROPIC_API_KEY}" } }
+    // Kept as a rollback path for the Opus agents: flip their `model:` back to
+    // anthropic/claude-opus-5 and they work again with no other change.
+    "anthropic": { "options": { "apiKey": "{env:ANTHROPIC_API_KEY}" } },
+    // Opus agents run here. The only credential is the user-scope Bedrock API
+    // key (AWS_BEARER_TOKEN_BEDROCK) - never in this file.
+    //
+    // region is pinned here rather than left to AWS_REGION on purpose: a region
+    // is not a secret, and an env var only reaches processes started AFTER it
+    // was set. A TUI already running when the var is added inherits a stale
+    // environment and every Bedrock agent dies with "AWS region setting is
+    // missing" - auth passes, region does not. Pinning makes it deterministic
+    // and survives a fresh clone with no extra setup step.
+    //
+    // The eu.* model IDs are EU inference profiles - their destination region
+    // list is fixed by AWS, so requests never leave the EU.
+    "amazon-bedrock": { "options": { "region": "eu-west-1" } }
   },
-  "enabled_providers": ["google", "anthropic"],
+  "enabled_providers": ["google", "anthropic", "amazon-bedrock"],
 
   "formatter": true,
   "lsp": true,
