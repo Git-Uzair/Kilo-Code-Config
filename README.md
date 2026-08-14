@@ -127,9 +127,10 @@ Each of these cost a broken run to learn; the config encodes the fix:
 - **`web_search: true` survives the move to Bedrock - it is not provider-native.**
   The obvious assumption is that this flag maps to Anthropic's server-side
   `web_search` tool, which Bedrock does not expose, and that moving the Opus
-  agents therefore costs them search. It does not. Kilo's `websearch` is its
-  own service (results carry a `sku_search` usage line), so it is
-  provider-agnostic. Verified on Bedrock: `websearch` is in the tool roster and
+  agents therefore costs them search. It does not. `websearch` routes to
+  Parallel through kilo's built-in mcp-parallel transport, independent of the
+  model provider - and needs neither a Kilo account nor a search API key of
+  yours. Verified on Bedrock: `websearch` is in the tool roster and
   returns real results. The Opus agents keep all three search paths -
   `websearch`, `webfetch` and the firecrawl MCP - and in practice reach for
   `webfetch`/firecrawl first for a known URL, per the standing instructions.

@@ -12,7 +12,13 @@
   "small_model": "google/gemini-3.7-flash",
   "instructions": ["~/.config/kilo/instructions.md"],
 
-  // Provider-native web search for all models (billed to the API keys).
+  // Enables the `websearch` tool. NOT provider-native, and not billed to the
+  // keys below: it routes to Parallel through kilo's built-in mcp-parallel
+  // transport (tool metadata: provider=parallel, transport=mcp-parallel; the
+  // sku_search count in results is Parallel's usage unit). Verified working
+  // with no Kilo account (auth.json empty, `kilo profile` reports
+  // unauthenticated) and no search API key of ours. Being provider-agnostic,
+  // it survived the Opus move to Bedrock unchanged.
   "web_search": true,
 
   // Own API keys only - no Kilo gateway/account. Keys live in user-scope
