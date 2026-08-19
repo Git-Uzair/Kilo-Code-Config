@@ -1,7 +1,7 @@
 ---
 name: codebase-map
 description: >
-  Free AST symbol map of a repository with `kopipasta map` - the first move
+  Free AST symbol map of a repository with `kopipasta map --json` - the first move
   when exploring unfamiliar code, locating where a symbol or behaviour
   lives, checking whether a helper already exists, or sizing which files a
   change touches. Also bundles several files into one payload with
@@ -17,7 +17,7 @@ license: MIT
 # Codebase map
 
 Reading files to discover which files matter spends the context you needed
-them for. `kopipasta map` prints the repository's symbol skeleton locally -
+them for. `kopipasta map --json` prints the repository's symbol skeleton locally -
 no model call, no network, no cost, nothing written - so you decide *what to
 read* before you decide *what to pay for*.
 
@@ -62,16 +62,30 @@ for `.git`, and `.gitignore` is read from the current directory.
 ## Move 1 - map first (free, writes nothing)
 
 ```bash
-kopipasta map                          # whole repo, text
-kopipasta map src/auth                 # one subsystem
-kopipasta map --json > map.json        # machine-readable, then grep it
-kopipasta map --budget 40k src         # cap the size
-kopipasta map -x 'tests/**' src        # exclude, applied last, wins
-kopipasta map --changed                # only the working-tree changes
-kopipasta map --changed-since main     # only what this branch touched
+kopipasta map --json                          # whole repo, JSON
+kopipasta map --json src/auth                 # one subsystem
+kopipasta map --json > map.json               # redirect, then parse/grep it
+kopipasta map --json --budget 40k src         # cap the size
+kopipasta map --json -x 'tests/**' src        # exclude, applied last, wins
+kopipasta map --json --changed                # only the working-tree changes
+kopipasta map --json --changed-since main     # only what this branch touched
 ```
 
-Text output is one line per file, its symbols indented four spaces:
+`--json` (the default in this setup) outputs a single JSON object:
+
+```json
+{"ok": true, "files": 128, "with_symbols": 96, "symbols": 812,
+ "chars": 41233, "est_tokens": 10308,
+ "map": {"src/auth/tokens.py": ["def validate(token: str) -> bool  # ..."]},
+ "path_only": ["src/big_generated.py"], "unmatched": []}
+```
+
+`path_only` lists files the `--budget` demoted: they are still named, with
+no symbols. Nothing is ever silently dropped, and a selector that matched
+nothing is reported rather than ignored.
+
+Omitting `--json` returns text output with one line per file, its symbols
+indented four spaces:
 
 ```text
 src/auth/tokens.py
@@ -85,19 +99,6 @@ file. Symbols are extracted for `.py`, `.js`, `.jsx`, `.ts`, `.tsx` only.
 For Go, Rust, Java, C#, PHP and everything else, `map` still lists the file,
 so the output is a filtered file tree: useful, but not a symbol index. Say
 which you got.
-
-`--json` gives one object:
-
-```json
-{"ok": true, "files": 128, "with_symbols": 96, "symbols": 812,
- "chars": 41233, "est_tokens": 10308,
- "map": {"src/auth/tokens.py": ["def validate(token: str) -> bool  # ..."]},
- "path_only": ["src/big_generated.py"], "unmatched": []}
-```
-
-`path_only` lists files the `--budget` demoted: they are still named, with
-no symbols. Nothing is ever silently dropped, and a selector that matched
-nothing is reported rather than ignored.
 
 **Then read narrowly.** The map names candidates; it is not evidence. Open
 the 2-5 files it points at with the `read` tool, by line ranges, and never

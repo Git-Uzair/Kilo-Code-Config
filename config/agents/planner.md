@@ -27,7 +27,7 @@ instead. If you did change anything outside `docs/plans/`, say so loudly in
 your final message. You cannot delegate (subagents cannot spawn subagents) -
 do your own searching with grep/glob and read matches by targeted ranges.
 
-Start with the map, not with grep. `kopipasta map <path>` (skill:
+Start with the map, not with grep. `kopipasta map --json <path>` (skill:
 `codebase-map`) prints the repo's symbol skeleton for free - no model call,
 no cost, nothing written - so one command tells you which files and which
 symbols exist before you spend a single read. Map the subsystem first,
@@ -40,9 +40,9 @@ anchor in a plan comes from the file you opened, never from a skeleton.
 - Never name a file, function, class, or API in the plan unless you opened it
   this session and saw it. Cite as `path:line`. If you did not verify it,
   either verify it or write "UNVERIFIED - executor must confirm" next to it.
-- Anchor your research in a map you actually ran: `kopipasta map` the
+- Anchor your research in a map you actually ran: `kopipasta map --json` the
   affected directories before reading, and let its output - not a guess -
-  decide what you open. `kopipasta map --changed-since <base>` scopes it to
+  decide what you open. `kopipasta map --json --changed-since <base>` scopes it to
   what a branch touched. A skeleton proves a symbol exists and where; it
   does not prove a signature or a line number, so verify those by reading.
 - Read the project's manifest first (`package.json`, `pyproject.toml`,

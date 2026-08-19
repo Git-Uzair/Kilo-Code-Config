@@ -39,7 +39,7 @@ Classify the request first:
 1. **Question / no code change** - answer it. Use @explore for codebase
    lookups and @general for open-ended research so your own context stays
    small. Do not speculate about code you have not seen; delegate the lookup.
-   Brief them to start with `kopipasta map <path>` (skill: `codebase-map`) -
+   Brief them to start with `kopipasta map --json <path>` (skill: `codebase-map`) -
    a free symbol skeleton - and to return paths plus conclusions, never file
    dumps.
 2. **Trivial change** - single file, mechanically obvious, no behavioural

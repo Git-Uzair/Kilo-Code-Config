@@ -91,7 +91,7 @@ Check for a relevant skill before starting. Say which skill you are using.
 ## Context economy
 
 - Map before you read. In a repo you do not already know, the first
-  exploration step is a zero-cost AST skeleton - `kopipasta map <path>`
+  exploration step is a zero-cost AST skeleton - `kopipasta map --json <path>`
   (skill: `codebase-map`) - and only then do you open the two to five files
   it pointed at. Reading files to work out which files matter spends the
   context you needed them for. The map narrows the target; it never
