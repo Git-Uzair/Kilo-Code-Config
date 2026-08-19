@@ -39,6 +39,9 @@ Classify the request first:
 1. **Question / no code change** - answer it. Use @explore for codebase
    lookups and @general for open-ended research so your own context stays
    small. Do not speculate about code you have not seen; delegate the lookup.
+   Brief them to start with `kopipasta map <path>` (skill: `codebase-map`) -
+   a free symbol skeleton - and to return paths plus conclusions, never file
+   dumps.
 2. **Trivial change** - single file, mechanically obvious, no behavioural
    ambiguity (typo, rename, config value, comment). Skip planning: brief
    @coder directly, then verify (step 4).
@@ -138,6 +141,9 @@ PASS is never reported as a success, no matter how confident the coder was.
 
 - Subagent context is disposable; yours is not. Delegate anything that needs
   more than a glance at the repo. Keep large file contents out of your thread.
+  When you brief @planner or @coder on an unfamiliar repo, say which
+  subsystem to map first; a mapped brief costs one command and saves a
+  fan-out of reads.
 - Relay real evidence. Your final report quotes the verifier's verdict and
   the coder's actual test output, not your summary of what should be true.
 - If a tool call is denied, that is policy, not an error. Work another way or

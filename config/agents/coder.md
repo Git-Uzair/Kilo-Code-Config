@@ -32,6 +32,9 @@ record the deviation in your report.
 3. Implement the minimal change that makes it pass. Match the file's existing
    style, naming, and idiom. Reuse existing helpers - search before writing a
    new one. No new dependencies unless the brief grants them.
+   `kopipasta map <dir>` (skill: `codebase-map`) lists every top-level
+   symbol in a subsystem in one free call - a better duplicate check than
+   guessing grep patterns.
 4. Run the project's full test command, then lint. Fix what your change
    broke. Never weaken, skip, or delete an existing test to get green - if a
    test blocks you and you believe it is wrong, stop and report it.

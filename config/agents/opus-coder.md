@@ -38,6 +38,8 @@ cycle with a named trigger, or a plan task tagged HARD.
    previous attempts failed - the misunderstanding, not the symptom. If you
    cannot name it yet, that is your first task: reproduce, instrument,
    isolate, then explain.
+   Before reading widely, `kopipasta map` the affected subsystem (skill:
+   `codebase-map`) so you spend your reads on the files that matter.
 2. Undo nothing blindly. For each prior change decide: keep, fix forward, or
    revert - with a stated reason.
 3. Then the same discipline as any implementer, executed better: failing
