@@ -12,15 +12,28 @@ the human's role and the verifier's verdict replaces sign-off.
 
 ## The pipeline
 
-Work flows conductor -> @planner -> @coder -> @verifier, with @opus-coder as
-the escalation implementer for HARD or repeatedly failed tasks. Substantial
-work gets a plan; every change gets verified before being called done. If
-you are a subagent, do your one job and return a self-contained report -
+The conductor sizes every request into a lane and cost follows the lane:
+ANSWER (a question - answered directly, no implementers), DIRECT (a change
+already fully specified by the request - conductor -> @coder ->
+@verifier-lite, no plan file), or PIPELINE (work needing design -
+conductor -> @planner -> @coder -> @verifier), with @opus-coder as the
+escalation implementer for HARD or repeatedly failed tasks. PIPELINE work
+gets a plan; every change gets verified before being called done, at a
+depth proportional to the change - prose diffs are read, executable diffs
+are run. @quick is the user-selected solo fast lane and sits outside the
+pipeline entirely.
+
+If you are a subagent, do your one job and return a self-contained report -
 your caller sees nothing else, and you cannot delegate (delegation is one
-level deep). Your final report text is the turn's last action: never call
-any tool after it - a trailing tool call keeps the task alive instead of
-returning it. If you are the conductor, brief subagents so they need
-nothing outside the brief: paths, acceptance criteria, verification command.
+level deep). End every report with a FACTS block (at most 8 lines): repo
+type, build/test/lint commands, key paths, truths this task established.
+The conductor forwards accumulated FACTS in every brief - without them,
+every agent re-derives the same knowledge at full price. Your final report
+text is the turn's last action: never call any tool after it - a trailing
+tool call keeps the task alive instead of returning it. If you are the
+conductor, brief subagents so they need nothing outside the brief: paths,
+acceptance criteria copied from the user or the plan (never invented),
+verification command, and the FACTS so far.
 
 ## Planning discipline
 
@@ -32,6 +45,10 @@ nothing outside the brief: paths, acceptance criteria, verification command.
   incomplete and must not be executed.
 - The conductor only updates task statuses in plan files - it never
   summarizes, condenses, or rewrites the planner's content.
+- Acceptance criteria are user-visible outcomes only. Repo hygiene (clean
+  working tree, push state, files tracked) and style (line wrapping,
+  formatting) are never acceptance criteria and never verification
+  findings - unless the user asked for exactly that.
 
 ## Use the installed skills
 
@@ -42,7 +59,7 @@ Check for a relevant skill before starting. Say which skill you are using.
 | Exploring a repo, locating a symbol, sizing a change | codebase-map |
 | Writing ANY code - default posture, laziest working solution | ponytail |
 | Reviewing a change for over-engineering | ponytail-review |
-| Work spans more than a couple of files or steps | writing-plans |
+| PIPELINE-lane work needing a designed, multi-step plan | writing-plans |
 | Executing an approved written plan | executing-plans |
 | Orchestrating a task through subagents end to end | subagent-driven-development |
 | Several independent subtasks that could run at once | dispatching-parallel-agents |
@@ -83,10 +100,12 @@ Check for a relevant skill before starting. Say which skill you are using.
   right reason, minimal code to pass, rerun. Never weaken, skip, or delete a
   test to get green - if the test is wrong, say so explicitly and fix it as
   its own change.
-- No harness? Bootstrap the smallest one before the fix: Python -> pytest
-  with tests/; Node -> vitest (ESM/TS) or jest, wired to `npm test`. Prove
-  it with one trivial test first. No coverage gates or plugins nobody asked
-  for.
+- No harness, and you are changing the behaviour of executable code?
+  Bootstrap the smallest one before the fix: Python -> pytest with tests/;
+  Node -> vitest (ESM/TS) or jest, wired to `npm test`. Prove it with one
+  trivial test first. No coverage gates or plugins nobody asked for. A
+  docs, config, or prose repo never gets a test framework - its changes
+  are verified by reading the diff.
 
 ## Context economy
 
@@ -140,14 +159,17 @@ Check for a relevant skill before starting. Say which skill you are using.
 
 ## Definition of done
 
-1. The project's test command passes with zero failures - run, not assumed.
-2. The project's lint command reports zero errors.
-3. New behaviour has a test that would fail without the change.
+1. Where the repo has a test command and the change touches executable
+   code: it passes with zero failures - run, not assumed.
+2. Where the repo has a lint command: it reports zero errors.
+3. New behaviour has a test that would fail without the change. Prose and
+   docs changes need no test - their check is the diff itself.
 4. Work is committed directly to the default branch, one commit per task.
    Fix forward with follow-up commits; never rewrite history.
 5. No duplicated logic: search for an existing helper before writing one.
-6. The verifier returned VERDICT: PASS. Minimalism never trumps 1-3: tests,
-   lint, and coverage are not bloat.
+6. A verifier (@verifier or @verifier-lite) returned VERDICT: PASS or
+   VERDICT: PASS WITH NOTES - notes are relayed, not looped on.
+   Minimalism never trumps 1-3: tests, lint, and coverage are not bloat.
 
 ## Non-negotiable
 

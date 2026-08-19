@@ -3,11 +3,14 @@
 
   // Every session starts in the multi-agent pipeline unless --agent says
   // otherwise. Falls back to built-in "code" if conductor is ever invalid.
+  // For attended one-sentence tasks, switch to the solo fast lane instead:
+  // Tab in the TUI or `--agent quick` - no pipeline, no plan files.
   "default_agent": "conductor",
 
   // Cheap default. The pipeline pins its own models per agent:
-  // conductor/coder = google/gemini-3.7-flash, planner/opus-coder/verifier =
-  // amazon-bedrock/eu.anthropic.claude-opus-5 (see ~/.config/kilo/agents/*.md).
+  // conductor/coder/quick/verifier-lite = google/gemini-3.7-flash;
+  // planner/opus-coder/verifier = amazon-bedrock/eu.anthropic.claude-opus-5
+  // (see ~/.config/kilo/agents/*.md).
   "model": "google/gemini-3.7-flash",
   "small_model": "google/gemini-3.7-flash",
   "instructions": ["~/.config/kilo/instructions.md"],

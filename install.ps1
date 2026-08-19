@@ -137,5 +137,5 @@ Write-Host "== Agent roster ==" -ForegroundColor Cyan
 # stderr streams to the console as live progress.
 kilo agent list | Select-String -Pattern '^\S+ \((primary|subagent|all)\)' | ForEach-Object { $_.Line }
 Write-Host ""
-Write-Host "Done. Expected custom agents: conductor, planner, coder, opus-coder, verifier."
+Write-Host "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite."
 Write-Host "Try:  kilo run --dir <repo> --auto `"your task`""

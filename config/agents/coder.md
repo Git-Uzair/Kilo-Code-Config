@@ -28,7 +28,8 @@ record the deviation in your report.
 2. Write the failing test first, exactly as the brief specifies. Run it.
    Confirm it fails for the expected reason - a test that fails for an import
    error proves nothing. If the brief has no test and behaviour changes,
-   write one anyway.
+   write one anyway. A prose/docs-only task changes no behaviour: skip the
+   test-first step entirely and never bootstrap a harness for it.
 3. Implement the minimal change that makes it pass. Match the file's
    existing style, naming, and idiom. Reuse existing helpers - search
    before writing a new one. No new dependencies unless the brief grants
@@ -54,6 +55,8 @@ Return: files changed (one line each on what and why), the branch and commit
 hash you created, the exact test and lint commands you ran, their real
 pasted output (trim to the meaningful tail), deviations from the brief, and
 anything you noticed but left alone
-because it was out of scope. If you could not finish, the first line is
-`BLOCKED:` with the reason - a truthful BLOCKED beats a fake done, which the
-verifier will catch anyway.
+because it was out of scope. End with a FACTS block (at most 8 lines): repo
+type, build/test/lint commands, key paths, truths this task established -
+the conductor forwards it so the next agent does not re-derive it. If you
+could not finish, the first line is `BLOCKED:` with the reason - a truthful
+BLOCKED beats a fake done, which the verifier will catch anyway.

@@ -11,11 +11,13 @@ No Kilo account or gateway required - you bring your own API keys.
 
 | Agent | Model | Role |
 |---|---|---|
-| **conductor** | gemini-3.7-flash *(Google)* | Default entry point. Routes work, drives the loop, never writes code. |
-| **planner** | claude-opus-5 *(Bedrock)* | Researches the repo, writes an exhaustive plan file section-by-section, tags each task `EASY`/`HARD`. |
-| **coder** | gemini-3.7-flash *(Google)* | First-line implementer: failing test first, minimal diff, commit per task. |
+| **conductor** | gemini-3.7-flash *(Google)* | Default entry point. Sizes every request into a lane - ANSWER, DIRECT, or PIPELINE - and routes it. Never writes code. |
+| **quick** | gemini-3.7-flash *(Google)* | User-selected solo fast lane (`Tab` / `--agent quick`): one-sentence tasks end to end, no pipeline, no plan files. |
+| **planner** | claude-opus-5 *(Bedrock)* | PIPELINE lane only. Researches the repo, writes an exhaustive plan file, tags each task `EASY`/`HARD` and its verification depth. |
+| **coder** | gemini-3.7-flash *(Google)* | First-line implementer: failing test first (code only), minimal diff, commit per task. |
 | **opus-coder** | claude-opus-5 *(Bedrock)* | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
-| **verifier** | claude-opus-5 *(Bedrock)* | Adversarial gate: runs the suite, probes edge cases empirically, audits scope/tests/secrets, emits `VERDICT: PASS/FAIL`. |
+| **verifier** | claude-opus-5 *(Bedrock)* | Adversarial PIPELINE gate: runs the suite, probes edge cases empirically, separates BLOCKING findings from advisory NOTES. |
+| **verifier-lite** | gemini-3.7-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
 
 Opus runs through **Amazon Bedrock** on the EU inference profile
 (`amazon-bedrock/eu.anthropic.claude-opus-5`), not the Anthropic API. Same
@@ -23,11 +25,22 @@ model, same list price, EU-pinned routing. The `anthropic` provider stays
 enabled purely as a rollback: flip the three `model:` lines in
 `config/agents/` back to `anthropic/claude-opus-5` and nothing else changes.
 
-Flow: request → plan (with per-task acceptance criteria) → implement → verify →
-loop on findings. Escalation to Opus fires on plan `HARD` tags or concrete
-triggers (repeated failed cycles, repeated findings, gamed tests, conflicting
-criteria), with an attempt ledger so no failed approach is ever retried.
-Nothing is reported done without a literal verifier `PASS`.
+Flow is proportional to the request. Questions are answered (ANSWER lane).
+Changes that are already fully specified - renames, find-and-replace, config
+values, docs edits, any file count - skip planning entirely: brief → implement
+→ diff-read verification (DIRECT lane). Only work that genuinely needs design
+gets the full plan → implement → verify loop (PIPELINE lane). Verdicts are
+three-valued - `PASS`, `PASS WITH NOTES`, `FAIL` - and only BLOCKING findings
+(unmet acceptance criteria, failing tests, secrets) can FAIL; style and
+hygiene observations are advisory NOTES that never trigger a fix cycle.
+Acceptance criteria are copied from the user's words, never invented, and
+re-verification is frozen to the first cycle's base and file list so the
+audit surface cannot grow. Fix loops are hard-capped at three cycles per
+task - then the run stops and reports honestly. Escalation to Opus fires on
+plan `HARD` tags or concrete triggers (second failed cycle, gamed tests,
+conflicting criteria), with an attempt ledger so no failed approach is ever
+retried. Nothing is reported done without a literal verifier `PASS` (or
+`PASS WITH NOTES`).
 
 Permissions are **allow/deny only - zero "ask" rules** - so sessions never
 stall on prompts. A hardened deny-list blocks the destructive stuff outright
@@ -72,7 +85,8 @@ repositories, installs the curated skill set plus the local skills in
 the env-var commands for your keys. Then verify:
 
 ```powershell
-kilo agent list   # expect: conductor, planner, coder, opus-coder, verifier
+kilo agent list   # expect: conductor, quick, planner, coder, opus-coder,
+                  #         verifier, verifier-lite
 ```
 
 ## Usage
@@ -84,8 +98,14 @@ kilo run --dir "C:\path\to\repo" --auto "implement X with tests"
 # interactive TUI (conductor is the default agent)
 kilo
 
+# attended and the task is one sentence? use the solo fast lane instead
+kilo --agent quick        # or Tab to `quick` inside the TUI
+
 # talk to a specialist directly
 #   @planner  @coder  @verifier  @opus-coder   (in the TUI message box)
+
+# force the fast path through the conductor in plain words
+#   "this is small, skip the plan" - the conductor's DIRECT lane is binding
 
 # escalate a stuck task by hand
 #   "escalate this to @opus-coder"
@@ -172,7 +192,7 @@ Each of these cost a broken run to learn; the config encodes the fix:
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the five pipeline agents (system prompt + permissions each)
+config/agents/*.md         the seven agents (system prompt + permissions each)
 scripts/update-skills.ps1  pulls skill repos, re-copies the curated set
 skills/codebase-map/       local skill: free AST repo map via kopipasta
 install.ps1 / install.sh   one-shot setup

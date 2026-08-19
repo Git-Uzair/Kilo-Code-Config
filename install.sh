@@ -108,5 +108,5 @@ echo "== Agent roster =="
 # to the console; roster lines are on stdout
 kilo agent list | grep -E '^\S+ \((primary|subagent|all)\)' || true
 echo ""
-echo "Done. Expected custom agents: conductor, planner, coder, opus-coder, verifier."
+echo "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite."
 echo 'Try:  kilo run --dir <repo> --auto "your task"'

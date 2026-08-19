@@ -54,5 +54,8 @@ cycle with a named trigger, or a plan task tagged HARD.
 
 Files changed and why; the root cause of the earlier failures in plain
 language; the exact test and lint commands with real output tails; the
-commit hash; anything you deliberately left alone. If you are blocked, line
-one is `BLOCKED:` with the reason - honesty outranks your success rate.
+commit hash; anything you deliberately left alone. End with a FACTS block
+(at most 8 lines): repo type, build/test/lint commands, key paths, truths
+this task established - the conductor forwards it to later agents. If you
+are blocked, line one is `BLOCKED:` with the reason - honesty outranks
+your success rate.
