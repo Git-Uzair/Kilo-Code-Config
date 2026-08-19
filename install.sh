@@ -61,12 +61,36 @@ copy_skills superpowers test-driven-development systematic-debugging \
 copy_skills ponytail ponytail ponytail-review
 copy_skills anthropic-skills frontend-design skill-creator webapp-testing
 
+# local skills shipped in this repo; mirrored so update-skills.ps1 can
+# refresh them later without knowing where this repo was cloned
+if [ -d "$REPO_ROOT/skills" ]; then
+  for s in "$REPO_ROOT"/skills/*/; do
+    [ -f "$s/SKILL.md" ] || continue
+    name="$(basename "$s")"
+    mkdir -p "$KILO/skills/$name" "$KILO/local-skills/$name"
+    cp -r "$s". "$KILO/skills/$name/"
+    cp -r "$s". "$KILO/local-skills/$name/"
+    echo "  -> $name (local)"
+  done
+fi
+
+# kopipasta - the context oracle behind the codebase-map skill (best effort)
+if command -v uv >/dev/null 2>&1; then
+  uv tool install --force kopipasta || echo "WARN: kopipasta install failed"
+elif command -v pip3 >/dev/null 2>&1; then
+  pip3 install --upgrade kopipasta || echo "WARN: kopipasta install failed"
+else
+  echo "WARN: neither uv nor pip3 found - skipping kopipasta. The codebase-map skill needs it: uv tool install kopipasta"
+fi
+
 echo ""
 echo "== Set your API keys (add to your shell profile) =="
 echo '  export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"'
 echo '  export AWS_BEARER_TOKEN_BEDROCK="<your-bedrock-api-key>"'
 echo '  export ANTHROPIC_API_KEY="<optional-anthropic-key>"'
 echo '  export FIRECRAWL_API_KEY="<optional-firecrawl-key>"'
+echo '  export GEMINI_API_KEY="<optional-key-for-kopipasta-ask>"'
+echo "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
 echo "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/kilo.jsonc)"
 echo ""
 echo "  Bedrock notes:"
