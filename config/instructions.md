@@ -39,6 +39,7 @@ Check for a relevant skill before starting. Say which skill you are using.
 
 | Situation | Skill |
 |---|---|
+| Exploring a repo, locating a symbol, sizing a change | codebase-map |
 | Writing ANY code - default posture, laziest working solution | ponytail |
 | Reviewing a change for over-engineering | ponytail-review |
 | Work spans more than a couple of files or steps | writing-plans |
@@ -89,6 +90,14 @@ Check for a relevant skill before starting. Say which skill you are using.
 
 ## Context economy
 
+- Map before you read. In a repo you do not already know, the first
+  exploration step is a zero-cost AST skeleton - `kopipasta map <path>`
+  (skill: `codebase-map`) - and only then do you open the two to five files
+  it pointed at. Reading files to work out which files matter spends the
+  context you needed them for. The map narrows the target; it never
+  replaces the read: `path:line` claims, edits, and citations still come
+  from the file itself, opened by ranges. No kopipasta on PATH? Say so and
+  fall back to a narrow `glob` plus anchored `grep`.
 - Conductor: exploration expected to touch more than ~3 files goes to
   @explore or @general; they return paths and short conclusions, never file
   dumps. Subagents: read by targeted ranges instead - you cannot delegate.
