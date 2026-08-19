@@ -1,6 +1,8 @@
 # Updates the global Kilo skill pool.
 # Pulls each skill repo, then re-copies the curated skill folders into
 # ~/.kilo/skills (the only directory Kilo actually loads from).
+# Local skills mirrored to ~/.kilo/local-skills (shipped in the config repo)
+# are re-copied afterwards, so updating never drops them.
 # Review upstream diffs before running this unattended - skills are prompts,
 # and prompts are supply chain.
 
@@ -30,5 +32,20 @@ foreach ($repo in $curated.Keys) {
         Write-Host "   -> $skill"
     }
 }
+
+# Local skills shipped with the config repo, mirrored to ~/.kilo/local-skills
+# by install.ps1/install.sh. Re-copied last so an upstream skill of the same
+# name can never shadow a local one, and so an update never drops them.
+$local = Join-Path (Split-Path -Parent $pool) 'local-skills'
+if (Test-Path $local) {
+    Write-Host "== local skills"
+    foreach ($skill in Get-ChildItem $local -Directory) {
+        $dest = Join-Path $pool $skill.Name
+        New-Item -ItemType Directory -Force $dest | Out-Null
+        Copy-Item (Join-Path $skill.FullName '*') $dest -Recurse -Force
+        Write-Host "   -> $($skill.Name)"
+    }
+}
+
 Write-Host "`nPool now contains:"
 (Get-ChildItem $pool -Directory).Name
