@@ -67,8 +67,9 @@ cd kilo-config && ./install.sh
 
 The installer backs up any existing `~/.config/kilo` and `~/.kilo` before
 touching them, installs the CLI, copies this config, clones the skill
-repositories, installs the curated skill set, and prints the env-var commands
-for your keys. Then verify:
+repositories, installs the curated skill set plus the local skills in
+`skills/`, installs `kopipasta` (via `uv` or `pip`, best effort), and prints
+the env-var commands for your keys. Then verify:
 
 ```powershell
 kilo agent list   # expect: conductor, planner, coder, opus-coder, verifier
@@ -96,6 +97,11 @@ history are updated there as the run proceeds, so runs survive restarts.
 
 Update skills later with: `~/.kilo/update-skills.ps1` (Windows) or re-run
 `./install.sh` (Unix).
+
+`kopipasta` is optional but assumed by the `codebase-map` skill: without it
+agents fall back to plain reads. Needs Python 3.10+; install by hand with
+`uv tool install kopipasta` (or `pip install kopipasta`) and check with
+`kopipasta map --help`.
 
 ## Design notes (the scars behind the choices)
 
@@ -167,6 +173,7 @@ config/kilo.jsonc          global config: models, providers, permissions, MCP, c
 config/instructions.md     standing instructions injected into every agent
 config/agents/*.md         the five pipeline agents (system prompt + permissions each)
 scripts/update-skills.ps1  pulls skill repos, re-copies the curated set
+skills/codebase-map/       local skill: free AST repo map via kopipasta
 install.ps1 / install.sh   one-shot setup
 ```
 
@@ -180,6 +187,13 @@ verification-before-completion ·
 minimal-code posture + review ·
 [anthropics/skills](https://github.com/anthropics/skills) (Apache-2.0) -
 skill-creator, webapp-testing, frontend-design.
+
+Plus one local skill shipped in this repo (MIT, same as the config):
+`codebase-map` - map a repository's symbols with
+[kopipasta](https://github.com/mkorpela/kopipasta) before reading files, so
+exploration costs one command instead of a fan-out of reads. Installed to
+`~/.kilo/skills/codebase-map/` and mirrored to `~/.kilo/local-skills/` so
+`update-skills.ps1` can refresh it.
 
 ## License
 
