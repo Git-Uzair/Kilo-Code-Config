@@ -64,16 +64,55 @@ foreach ($name in $sources.Keys) {
     }
     if ($LASTEXITCODE -ne 0) { throw "git failed for $name (exit $LASTEXITCODE)" }
 }
+
+# Local skills shipped in this repo (skills/<name>/SKILL.md). Mirrored to
+# ~/.kilo/local-skills so the standalone update-skills.ps1 can refresh them
+# later without knowing where this repo was cloned.
+$localSrc = Join-Path $repoRoot 'skills'
+$localMirror = Join-Path $kiloDir 'local-skills'
+if (Test-Path $localSrc) {
+    foreach ($skill in Get-ChildItem $localSrc -Directory) {
+        foreach ($dest in @((Join-Path $localMirror $skill.Name), (Join-Path (Join-Path $kiloDir 'skills') $skill.Name))) {
+            New-Item -ItemType Directory -Force $dest | Out-Null
+            Copy-Item (Join-Path $skill.FullName '*') $dest -Recurse -Force
+        }
+        Write-Host "  -> $($skill.Name) (local)"
+    }
+}
+
 Copy-Item (Join-Path $repoRoot 'scripts\update-skills.ps1') $kiloDir -Force
 & (Join-Path $kiloDir 'update-skills.ps1')
 
-# 6. API keys - never stored, never echoed
+# 6. kopipasta - the context oracle behind the codebase-map skill.
+# Best-effort: no Python toolchain must never fail a Kilo install.
+$kopiOk = $false
+if (Get-Command uv -ErrorAction SilentlyContinue) {
+    Write-Host "Installing kopipasta (uv) ..."
+    uv tool install --force kopipasta
+    $kopiOk = ($LASTEXITCODE -eq 0)
+}
+elseif (Get-Command pip -ErrorAction SilentlyContinue) {
+    Write-Host "Installing kopipasta (pip) ..."
+    pip install --upgrade kopipasta
+    $kopiOk = ($LASTEXITCODE -eq 0)
+}
+if ($kopiOk) {
+    # 0.70.0 introduced the verbs; older builds have no `map`.
+    Write-Host "kopipasta installed. Verify with: kopipasta map --help"
+}
+else {
+    Write-Warning "kopipasta not installed (needs uv or pip). The codebase-map skill falls back to plain reads until you run: uv tool install kopipasta"
+}
+
+# 7. API keys - never stored, never echoed
 Write-Host ""
 Write-Host "== Set your API keys (user scope, new terminals pick them up) ==" -ForegroundColor Yellow
 Write-Host '  [Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK","<your-bedrock-api-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<optional-anthropic-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY","<optional-firecrawl-key>","User")'
+Write-Host '  [Environment]::SetEnvironmentVariable("GEMINI_API_KEY","<optional-key-for-kopipasta-ask>","User")'
+Write-Host "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
 Write-Host "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/kilo.jsonc)"
 Write-Host ""
 Write-Host "  Bedrock notes:" -ForegroundColor Yellow
@@ -88,7 +127,7 @@ Write-Host "  Already have a kilo TUI open? Restart it." -ForegroundColor Yellow
 Write-Host "  A running process keeps the environment it started with and will not"
 Write-Host "  see keys you set just now."
 
-# 7. Verify
+# 8. Verify
 Write-Host ""
 Write-Host "== Agent roster ==" -ForegroundColor Cyan
 # No 2>&1 here: kilo reports first-run DB migration progress on stderr, and in
