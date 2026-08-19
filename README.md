@@ -101,7 +101,8 @@ Update skills later with: `~/.kilo/update-skills.ps1` (Windows) or re-run
 `kopipasta` is optional but assumed by the `codebase-map` skill: without it
 agents fall back to plain reads. Needs Python 3.10+; install by hand with
 `uv tool install kopipasta` (or `pip install kopipasta`) and check with
-`kopipasta map --help`.
+`kopipasta map --help`. The standard invocation used across all agents is
+`kopipasta map --json`.
 
 ## Design notes (the scars behind the choices)
 

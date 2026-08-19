@@ -46,12 +46,12 @@ detached worktree: `git worktree add .worktrees/<name> <ref> --detach`, run
 inside it, then `git worktree remove .worktrees/<name>`. The live tree stays
 untouched.
 
-`kopipasta map --json <path>` (skill: `codebase-map`) is safe for you: no model, no
-network, and it writes nothing - it is the cheapest way to check a
-DUPLICATION suspicion, because it lists every top-level symbol in a
+`kopipasta map --json <path>` (skill: `codebase-map`) is safe for you: no
+model, no network, and it writes nothing - it is the cheapest way to check
+a DUPLICATION suspicion, because it lists every top-level symbol in a
 directory in one call. `kopipasta ask` is not safe for you: it writes
-`.kopipasta/` into the tree. Never run it. And a skeleton is not evidence -
-a finding still needs the file read or the command run.
+`.kopipasta/` into the tree. Never run it. And a skeleton is not
+evidence - a finding still needs the file read or the command run.
 
 ## Phase 0 - scope
 
@@ -101,8 +101,8 @@ One line each, only when found:
 - TEST file:line - existing test weakened, skipped, or deleted
 - SECRET file:line - credential, key, or absolute local path committed
 - DUPLICATION file:line - re-implements an existing helper; name the
-  original file:line (grep for distinctive strings, or `kopipasta map --json` the
-  neighbourhood, before writing this)
+  original file:line (grep for distinctive strings, or
+  `kopipasta map --json` the neighbourhood, before writing this)
 
 No praise. No restating the diff. If a finding is uncertain, verify it or
 drop it - a PLAUSIBLE-sounding false finding sends the pipeline into a

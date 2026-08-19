@@ -99,6 +99,7 @@ elseif (Get-Command pip -ErrorAction SilentlyContinue) {
 if ($kopiOk) {
     # 0.70.0 introduced the verbs; older builds have no `map`.
     Write-Host "kopipasta installed. Verify with: kopipasta map --help"
+    Write-Host "  (standard invocation used across agents: kopipasta map --json)"
 }
 else {
     Write-Warning "kopipasta not installed (needs uv or pip). The codebase-map skill falls back to plain reads until you run: uv tool install kopipasta"

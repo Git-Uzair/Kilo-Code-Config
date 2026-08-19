@@ -1,10 +1,10 @@
 ---
 name: codebase-map
 description: >
-  Free AST symbol map of a repository with `kopipasta map --json` - the first move
-  when exploring unfamiliar code, locating where a symbol or behaviour
-  lives, checking whether a helper already exists, or sizing which files a
-  change touches. Also bundles several files into one payload with
+  Free AST symbol map of a repository with `kopipasta map --json` - the
+  first move when exploring unfamiliar code, locating where a symbol or
+  behaviour lives, checking whether a helper already exists, or sizing which
+  files a change touches. Also bundles several files into one payload with
   `kopipasta ask --dry-run` (no model, no cost), and triages a whole repo in
   one call with `kopipasta ask -q "..." --json` when a provider key is
   configured. Use it BEFORE opening files to find out which files matter, on
@@ -17,9 +17,9 @@ license: MIT
 # Codebase map
 
 Reading files to discover which files matter spends the context you needed
-them for. `kopipasta map --json` prints the repository's symbol skeleton locally -
-no model call, no network, no cost, nothing written - so you decide *what to
-read* before you decide *what to pay for*.
+them for. `kopipasta map --json` prints the repository's symbol skeleton
+locally - no model call, no network, no cost, nothing written - so you
+decide *what to read* before you decide *what to pay for*.
 
 This skill covers three moves. Move 1 is free and safe everywhere. Move 2 is
 free and writes session files. Move 3 spends money and needs a key.
@@ -67,8 +67,8 @@ kopipasta map --json src/auth                 # one subsystem
 kopipasta map --json > map.json               # redirect, then parse/grep it
 kopipasta map --json --budget 40k src         # cap the size
 kopipasta map --json -x 'tests/**' src        # exclude, applied last, wins
-kopipasta map --json --changed                # only the working-tree changes
-kopipasta map --json --changed-since main     # only what this branch touched
+kopipasta map --json --changed                # working-tree changes only
+kopipasta map --json --changed-since main     # what this branch touched
 ```
 
 `--json` (the default in this setup) outputs a single JSON object:

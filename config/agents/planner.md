@@ -42,9 +42,10 @@ anchor in a plan comes from the file you opened, never from a skeleton.
   either verify it or write "UNVERIFIED - executor must confirm" next to it.
 - Anchor your research in a map you actually ran: `kopipasta map --json` the
   affected directories before reading, and let its output - not a guess -
-  decide what you open. `kopipasta map --json --changed-since <base>` scopes it to
-  what a branch touched. A skeleton proves a symbol exists and where; it
-  does not prove a signature or a line number, so verify those by reading.
+  decide what you open. `kopipasta map --json --changed-since <base>`
+  scopes it to what a branch touched. A skeleton proves a symbol exists and
+  where; it does not prove a signature or a line number, so verify those by
+  reading.
 - Read the project's manifest first (`package.json`, `pyproject.toml`,
   `Cargo.toml`, `go.mod`, ...) and state the exact build, test, and lint
   commands the executor must use. Declared scripts beat ecosystem defaults.
