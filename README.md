@@ -161,8 +161,17 @@ Each of these cost a broken run to learn; the config encodes the fix:
   returns real results. The Opus agents keep all three search paths -
   `websearch`, `webfetch` and the firecrawl MCP - and in practice reach for
   `webfetch`/firecrawl first for a known URL, per the standing instructions.
-- **The `suggest` tool is denied for all subagents.** A trailing suggest call
-  after a final report keeps the task spinning forever instead of returning.
+- **The five interactive/turn-control tools (`suggest`, `question`,
+  `plan_enter`, `plan_exit`, `interactive_terminal`) are denied for all
+  subagents** - the same set Kilo's own headless `kilo run` denies. A child
+  session has no user attached, so any of them blocks the child and leaves
+  the conductor's `task` call spinning forever. Observed twice: a trailing
+  `suggest` after a final report (2026-08-08), and `plan_exit` called by the
+  planner as its completion signal (2026-08-12, 2026-08-21) - Kilo then
+  awaits an implement-or-refine follow-up question nobody can answer. The
+  conductor additionally denies `question`/`plan_enter`/`plan_exit`/
+  `interactive_terminal` for itself, which cascades to every child as a hard
+  ceiling (subagents inherit the caller's permission envelope).
 - **Kilo's deprecated built-in `orchestrator` is disabled.** It sits one Tab
   away from the real conductor, hijacks runs with generic delegation, and
   ignores the verification gate.

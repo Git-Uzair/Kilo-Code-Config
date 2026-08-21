@@ -5,12 +5,18 @@ model: google/gemini-3.7-flash
 temperature: 0.1
 # Same execution posture as @verifier: file mutation tool-denied, git locked
 # to read-only forms (deny-first, re-allow reads; last match wins).
-# suggest denied for every subagent: a trailing suggest call after the final
-# verdict keeps the task spinning instead of returning (2026-08-08).
+# The five interactive/turn-control tools are denied for every subagent -
+# the same set Kilo's own headless `kilo run` denies. A child session has no
+# user attached, so any of them wedges the child and leaves the conductor's
+# task call spinning (suggest: 2026-08-08; plan_exit: 2026-08-12/21).
 permission:
   edit: deny
   write: deny
   suggest: deny
+  question: deny
+  plan_enter: deny
+  plan_exit: deny
+  interactive_terminal: deny
   bash:
     "git*": deny
     "git status*": allow

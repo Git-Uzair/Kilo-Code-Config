@@ -5,9 +5,14 @@ model: google/gemini-3.7-flash
 temperature: 0.1
 # Deliberately cannot delegate: quick exists to NOT summon the pipeline.
 # suggest denied: a trailing suggest call keeps the session spinning
-# instead of returning (2026-08-08).
+# instead of returning (2026-08-08). plan_enter/plan_exit denied: quick's
+# contract is no plan files, and a completed plan_exit parks the session on
+# Kilo's implement-or-refine follow-up (the wedge that hit the planner on
+# 2026-08-12/21). question stays allowed - quick is attended by definition.
 permission:
   suggest: deny
+  plan_enter: deny
+  plan_exit: deny
   task:
     "*": deny
 ---

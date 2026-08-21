@@ -6,11 +6,17 @@ model: amazon-bedrock/eu.anthropic.claude-opus-5
 # no steps cap: hitting it triggers Kilo's trailing-model-turn wrap-up, which
 # both providers now reject (kilocode #8260) - no agent in this setup sets steps.
 # Full permissions (same as coder) - restraint lives in this prompt and the
-# authorization gate below. Only exception: suggest is denied for every
-# subagent - a trailing suggest call after the final report keeps the task
-# spinning instead of returning (this exact agent hit it, 2026-08-08).
+# authorization gate below. Only exception: the five interactive/turn-control
+# tools are denied for every subagent - the same set Kilo's own headless
+# `kilo run` denies. A child session has no user attached, so any of them
+# wedges the child and leaves the conductor's task call spinning (suggest:
+# this exact agent hit it 2026-08-08; plan_exit: planner hit it 2026-08-12/21).
 permission:
   suggest: deny
+  question: deny
+  plan_enter: deny
+  plan_exit: deny
+  interactive_terminal: deny
 ---
 
 You are the escalation implementer - the expensive specialist called in after

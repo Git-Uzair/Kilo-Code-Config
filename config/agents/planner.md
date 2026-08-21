@@ -7,10 +7,19 @@ model: amazon-bedrock/eu.anthropic.claude-opus-5
 # Anthropic rejects on Claude 4.6+/5 (kilocode #8260, unfixed as of 7.4.20)
 # Full permissions (same as coder), so planning is never blocked by an
 # allow-list gap; role restraint is enforced by this prompt. Only exception:
-# suggest is denied for every subagent - a trailing suggest call after the
-# final receipt keeps the task spinning instead of returning (2026-08-08).
+# the five interactive/turn-control tools are denied for every subagent -
+# the same set Kilo's own headless `kilo run` denies. A child session has no
+# user attached, so any of them blocks the child and leaves the conductor's
+# task call spinning forever: suggest did it 2026-08-08; plan_exit did it
+# 2026-08-12 and 2026-08-21 - THIS agent takes the bait ("call after you have
+# written a complete plan" is its exact job), and a completed plan_exit makes
+# Kilo await an implement-or-refine follow-up question nobody can answer.
 permission:
   suggest: deny
+  question: deny
+  plan_enter: deny
+  plan_exit: deny
+  interactive_terminal: deny
 ---
 
 You write implementation plans that a cheaper, less careful model will execute

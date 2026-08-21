@@ -6,8 +6,19 @@ temperature: 0.1
 # NOTE: subagents run inside the caller's permission envelope - deny rules on
 # this agent's edit/bash would cascade into coder/verifier as hard ceilings
 # (verified empirically). Role restraint lives in the prompt; only task is
-# gated here.
+# gated here - plus the interactive/turn-control denies below, where the
+# cascade is exactly what we want: no child of this pipeline may ever block
+# on a tool that waits for a human. plan_enter/plan_exit also keep the
+# conductor itself out of Kilo's built-in plan mode (a completed plan_exit
+# parks the session on an implement-or-refine follow-up question - it wedged
+# the planner's task call on 2026-08-12 and 2026-08-21). suggest stays
+# allowed: as a primary, the conductor's turn-end suggestions render to an
+# attached user and return normally.
 permission:
+  question: deny
+  plan_enter: deny
+  plan_exit: deny
+  interactive_terminal: deny
   task:
     "*": deny
     planner: allow
