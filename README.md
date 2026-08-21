@@ -18,16 +18,12 @@ No Kilo account or gateway required - you bring your own API keys.
 | **opus-coder** | claude-opus-5 *(Bedrock)* | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
 | **verifier** | claude-opus-5 *(Bedrock)* | Adversarial PIPELINE gate: runs the suite, probes edge cases empirically, separates BLOCKING findings from advisory NOTES. |
 | **verifier-lite** | gemini-3.7-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
-| **boss** | claude-fable-5 @ max reasoning *(Bedrock)* | User-summoned solo heavyweight (`Tab` / `--agent boss` / naming `@boss`): coding, planning, verifying, debugging for tasks the user judges worth the biggest model. Never auto-routed. |
 
-The Claude agents run through **Amazon Bedrock** on EU inference profiles
-(`amazon-bedrock/eu.anthropic.claude-opus-5`, `...claude-fable-5`), not the
-Anthropic API. Same models, same list price, EU-pinned routing. The
-`anthropic` provider stays enabled purely as a rollback: flip the `model:`
-lines in `config/agents/` back to `anthropic/claude-opus-5` (or
-`anthropic/claude-fable-5` for boss) and nothing else changes. Note: boss
-needs its Bedrock inference profiles added to the API key's IAM policy
-first - see the bring-up comment in `config/agents/boss.md`.
+Opus runs through **Amazon Bedrock** on the EU inference profile
+(`amazon-bedrock/eu.anthropic.claude-opus-5`), not the Anthropic API. Same
+model, same list price, EU-pinned routing. The `anthropic` provider stays
+enabled purely as a rollback: flip the three `model:` lines in
+`config/agents/` back to `anthropic/claude-opus-5` and nothing else changes.
 
 Flow is proportional to the request. Questions are answered (ANSWER lane).
 Changes that are already fully specified - renames, find-and-replace, config
@@ -90,7 +86,7 @@ the env-var commands for your keys. Then verify:
 
 ```powershell
 kilo agent list   # expect: conductor, quick, planner, coder, opus-coder,
-                  #         verifier, verifier-lite, boss
+                  #         verifier, verifier-lite
 ```
 
 ## Usage
@@ -205,7 +201,7 @@ Each of these cost a broken run to learn; the config encodes the fix:
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the eight agents (system prompt + permissions each)
+config/agents/*.md         the seven agents (system prompt + permissions each)
 scripts/update-skills.ps1  pulls skill repos, re-copies the curated set
 skills/codebase-map/       local skill: free AST repo map via kopipasta
 install.ps1 / install.sh   one-shot setup
