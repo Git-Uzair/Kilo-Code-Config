@@ -28,7 +28,13 @@ foreach ($repo in $curated.Keys) {
     foreach ($skill in $curated[$repo]) {
         $src = Join-Path $repoPath "skills\$skill"
         if (-not (Test-Path "$src\SKILL.md")) { Write-Warning "gone upstream: $repo/$skill"; continue }
-        Copy-Item $src (Join-Path $pool $skill) -Recurse -Force
+        # Remove before copying: Copy-Item onto an existing directory nests the
+        # source inside it (skills/<name>/<name>/SKILL.md), and Kilo keeps the
+        # first-discovered top-level copy - so updates never took effect.
+        # Removing first also purges files deleted upstream.
+        $dest = Join-Path $pool $skill
+        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+        Copy-Item $src $dest -Recurse
         Write-Host "   -> $skill"
     }
 }
