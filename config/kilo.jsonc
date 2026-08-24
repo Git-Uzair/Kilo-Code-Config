@@ -32,7 +32,19 @@
     // Live for @boss (anthropic/claude-fable-5) and the rollback path for the
     // Opus agents: flip their `model:` back to anthropic/claude-opus-5 and
     // they work again with no other change.
-    "anthropic": { "options": { "apiKey": "{env:ANTHROPIC_API_KEY}" } },
+    //
+    // baseURL is pinned because kilo 7.4.23 builds the anthropic URL without
+    // /v1: requests go to api.anthropic.com/messages, which does not exist,
+    // so every model on this provider dies with a bare 404 "Not Found"
+    // (kilo.db's AI_APICallError records carry the bad URL; the identical
+    // request replayed at /v1/messages returns 200). The SDK appends
+    // /messages to this value. Google and Bedrock are unaffected.
+    "anthropic": {
+      "options": {
+        "baseURL": "https://api.anthropic.com/v1",
+        "apiKey": "{env:ANTHROPIC_API_KEY}"
+      }
+    },
     // Opus agents run here. The only credential is the user-scope Bedrock API
     // key (AWS_BEARER_TOKEN_BEDROCK) - never in this file.
     //

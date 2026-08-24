@@ -15,8 +15,10 @@ variant: max
 # 200). Unusable for multi-step agent runs. Bedrock returns here as a
 # one-line model swap once the account gets a usable single-region profile
 # (revert c3214a6 carries the full trace).
-# Needs ANTHROPIC_API_KEY (user-scope env var) from an org WITH Claude
-# Fable 5 access - the key present on 2026-08-21 404'd on this model.
+# Needs ANTHROPIC_API_KEY (user-scope env var) from an org with Claude
+# Fable 5 access. (The 2026-08-21 "no Fable access on that org" 404 was a
+# misdiagnosis: kilo 7.4.23 drops /v1 from the anthropic URL - fixed by the
+# baseURL pin in kilo.jsonc. Access + invocation verified live 2026-08-24.)
 # no temperature: claude-fable-5 does not accept one (registry: temperature false)
 # no steps cap: reaching it makes Kilo send an assistant-prefill wrap-up,
 # which Anthropic rejects on Claude 4.6+/5 (kilocode #8260, unfixed 7.4.23)

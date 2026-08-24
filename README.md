@@ -195,6 +195,16 @@ Each of these cost a broken run to learn; the config encodes the fix:
   ([bun#31941](https://github.com/oven-sh/bun/issues/31941), fixed in Bun
   1.4.0, not yet shipped in a Kilo build). Restart TUI sessions every few
   hours; the plan-file + commit-per-task design makes resuming free.
+- **kilo 7.4.23 drops `/v1` from the Anthropic API URL.** The anthropic
+  provider sends requests to `api.anthropic.com/messages`, which does not
+  exist, so every model on that provider fails with a bare `Not Found` -
+  no JSON error body, so nothing names the real cause. `kilo.db`'s
+  `AI_APICallError` records carry the bad URL, and the identical request
+  replayed at `/v1/messages` returns 200. Fixed by pinning
+  `baseURL: "https://api.anthropic.com/v1"` in the provider options (the
+  SDK appends `/messages`); harmless on versions that build the URL
+  correctly. This also retro-explains the 2026-08-21 boss bring-up 404
+  that was blamed on missing Fable access.
 - **The grep tool hangs forever past 100 matches (Windows)**: kilo's `grep`
   caps results at an internal `MAX_SEARCH_LIMIT` of 100 (the `limit` param
   cannot exceed it), and the over-limit truncation path loses the search's
