@@ -18,12 +18,19 @@ No Kilo account or gateway required - you bring your own API keys.
 | **opus-coder** | claude-opus-5 *(Bedrock)* | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
 | **verifier** | claude-opus-5 *(Bedrock)* | Adversarial PIPELINE gate: runs the suite, probes edge cases empirically, separates BLOCKING findings from advisory NOTES. |
 | **verifier-lite** | gemini-3.7-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
+| **boss** | claude-fable-5 @ max reasoning *(Anthropic)* | User-summoned solo heavyweight (`Tab` / `--agent boss` / naming `@boss`): coding, planning, verifying, debugging for tasks the user judges worth the biggest model. Never auto-routed. |
 
 Opus runs through **Amazon Bedrock** on the EU inference profile
 (`amazon-bedrock/eu.anthropic.claude-opus-5`), not the Anthropic API. Same
-model, same list price, EU-pinned routing. The `anthropic` provider stays
-enabled purely as a rollback: flip the three `model:` lines in
-`config/agents/` back to `anthropic/claude-opus-5` and nothing else changes.
+model, same list price, EU-pinned routing. The `anthropic` provider is live
+for **boss** (`anthropic/claude-fable-5`) and doubles as the Opus rollback:
+flip the three Opus `model:` lines in `config/agents/` back to
+`anthropic/claude-opus-5` and nothing else changes. Boss stays off Bedrock
+deliberately: Fable 5 there requires the `provider_data_share` retention
+mode (enabled only in eu-west-1 for this account), Fable has no `eu.`
+inference profile, and the `global.` profile fanned out worldwide at
+~1-in-3 success when traced (2026-08-21). It moves back the day the account
+gets a usable profile - a one-line model swap in `config/agents/boss.md`.
 
 Flow is proportional to the request. Questions are answered (ANSWER lane).
 Changes that are already fully specified - renames, find-and-replace, config
@@ -56,7 +63,9 @@ stall on prompts. A hardened deny-list blocks the destructive stuff outright
 - API keys (set as env vars during install - never stored in this repo):
   - `GOOGLE_GENERATIVE_AI_API_KEY` - [Google AI Studio](https://aistudio.google.com)
   - `AWS_BEARER_TOKEN_BEDROCK` - a **long-term** Bedrock API key (AWS console). Short-term keys expire in <=12h and will kill an overnight run mid-flight.
-  - `ANTHROPIC_API_KEY` *(optional)* - only needed if you roll the Opus agents back to the Anthropic provider. The pipeline runs fine without it.
+  - `ANTHROPIC_API_KEY` - powers **boss** (Fable 5) and doubles as the Opus
+    rollback path. Must belong to an org with Claude Fable 5 access. The
+    pipeline minus boss runs fine without it.
   - `FIRECRAWL_API_KEY` *(optional)* - powers the agents' web search via MCP; without it, remove the `mcp.firecrawl` block from `config/kilo.jsonc`
 
 No `AWS_REGION` needed - the region is pinned in `config/kilo.jsonc` under the
@@ -86,7 +95,7 @@ the env-var commands for your keys. Then verify:
 
 ```powershell
 kilo agent list   # expect: conductor, quick, planner, coder, opus-coder,
-                  #         verifier, verifier-lite
+                  #         verifier, verifier-lite, boss
 ```
 
 ## Usage
@@ -102,13 +111,16 @@ kilo
 kilo --agent quick        # or Tab to `quick` inside the TUI
 
 # talk to a specialist directly
-#   @planner  @coder  @verifier  @opus-coder   (in the TUI message box)
+#   @planner  @coder  @verifier  @opus-coder  @boss   (in the TUI message box)
 
 # force the fast path through the conductor in plain words
 #   "this is small, skip the plan" - the conductor's DIRECT lane is binding
 
 # escalate a stuck task by hand
 #   "escalate this to @opus-coder"
+
+# the hardest tasks, worth the biggest model (Fable 5 @ max reasoning)
+kilo --agent boss         # or name @boss in a request - never auto-routed
 ```
 
 Plans land in `docs/plans/<date>-<slug>.md` inside the target repo and double
@@ -201,7 +213,7 @@ Each of these cost a broken run to learn; the config encodes the fix:
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the seven agents (system prompt + permissions each)
+config/agents/*.md         the eight agents (system prompt + permissions each)
 scripts/update-skills.ps1  pulls skill repos, re-copies the curated set
 skills/codebase-map/       local skill: free AST repo map via kopipasta
 install.ps1 / install.sh   one-shot setup

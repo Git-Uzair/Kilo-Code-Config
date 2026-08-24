@@ -110,7 +110,7 @@ Write-Host ""
 Write-Host "== Set your API keys (user scope, new terminals pick them up) ==" -ForegroundColor Yellow
 Write-Host '  [Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK","<your-bedrock-api-key>","User")'
-Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<optional-anthropic-key>","User")'
+Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<anthropic-key-for-boss>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY","<optional-firecrawl-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("GEMINI_API_KEY","<optional-key-for-kopipasta-ask>","User")'
 Write-Host "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
@@ -122,7 +122,8 @@ Write-Host "    - Use SetEnvironmentVariable above, not setx: setx truncates at 
 Write-Host "      chars and a silently-truncated key fails auth with no clear cause."
 Write-Host "    - Claude Opus 5 model access must be granted in the Bedrock console."
 Write-Host "    - No AWS_REGION needed: the region is pinned in kilo.jsonc."
-Write-Host "    - ANTHROPIC_API_KEY is optional - rollback path only."
+Write-Host "    - ANTHROPIC_API_KEY: needed for @boss (Fable 5, org must have model"
+Write-Host "      access); otherwise optional - it is also the Opus rollback path."
 Write-Host ""
 Write-Host "  Already have a kilo TUI open? Restart it." -ForegroundColor Yellow
 Write-Host "  A running process keeps the environment it started with and will not"
@@ -137,5 +138,5 @@ Write-Host "== Agent roster ==" -ForegroundColor Cyan
 # stderr streams to the console as live progress.
 kilo agent list | Select-String -Pattern '^\S+ \((primary|subagent|all)\)' | ForEach-Object { $_.Line }
 Write-Host ""
-Write-Host "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite."
+Write-Host "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite, boss."
 Write-Host "Try:  kilo run --dir <repo> --auto `"your task`""

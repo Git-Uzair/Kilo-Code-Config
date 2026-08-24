@@ -9,7 +9,8 @@
 
   // Cheap default. The pipeline pins its own models per agent:
   // conductor/coder/quick/verifier-lite = google/gemini-3.7-flash;
-  // planner/opus-coder/verifier = amazon-bedrock/eu.anthropic.claude-opus-5
+  // planner/opus-coder/verifier = amazon-bedrock/eu.anthropic.claude-opus-5;
+  // boss = anthropic/claude-fable-5 at variant max
   // (see ~/.config/kilo/agents/*.md).
   "model": "google/gemini-3.7-flash",
   "small_model": "google/gemini-3.7-flash",
@@ -28,8 +29,9 @@
   // env vars, never in this file.
   "provider": {
     "google": { "env": ["GOOGLE_GENERATIVE_AI_API_KEY"] },
-    // Kept as a rollback path for the Opus agents: flip their `model:` back to
-    // anthropic/claude-opus-5 and they work again with no other change.
+    // Live for @boss (anthropic/claude-fable-5) and the rollback path for the
+    // Opus agents: flip their `model:` back to anthropic/claude-opus-5 and
+    // they work again with no other change.
     "anthropic": { "options": { "apiKey": "{env:ANTHROPIC_API_KEY}" } },
     // Opus agents run here. The only credential is the user-scope Bedrock API
     // key (AWS_BEARER_TOKEN_BEDROCK) - never in this file.

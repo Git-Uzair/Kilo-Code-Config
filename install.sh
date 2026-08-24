@@ -87,7 +87,7 @@ echo ""
 echo "== Set your API keys (add to your shell profile) =="
 echo '  export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"'
 echo '  export AWS_BEARER_TOKEN_BEDROCK="<your-bedrock-api-key>"'
-echo '  export ANTHROPIC_API_KEY="<optional-anthropic-key>"'
+echo '  export ANTHROPIC_API_KEY="<anthropic-key-for-boss>"'
 echo '  export FIRECRAWL_API_KEY="<optional-firecrawl-key>"'
 echo '  export GEMINI_API_KEY="<optional-key-for-kopipasta-ask>"'
 echo "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
@@ -97,7 +97,8 @@ echo "  Bedrock notes:"
 echo "    - Use a LONG-TERM Bedrock API key; short-term ones expire in <=12h."
 echo "    - Claude Opus 5 model access must be granted in the Bedrock console."
 echo "    - No AWS_REGION needed: the region is pinned in kilo.jsonc."
-echo "    - ANTHROPIC_API_KEY is optional - rollback path only."
+echo "    - ANTHROPIC_API_KEY: needed for @boss (Fable 5, org must have model"
+echo "      access); otherwise optional - it is also the Opus rollback path."
 echo ""
 echo "  Already have a kilo TUI open? Restart it - a running process keeps the"
 echo "  environment it started with and will not see keys you set just now."
@@ -108,5 +109,5 @@ echo "== Agent roster =="
 # to the console; roster lines are on stdout
 kilo agent list | grep -E '^\S+ \((primary|subagent|all)\)' || true
 echo ""
-echo "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite."
+echo "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite, boss."
 echo 'Try:  kilo run --dir <repo> --auto "your task"'
