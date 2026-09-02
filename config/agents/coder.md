@@ -1,12 +1,13 @@
 ---
-description: Implementation engineer on Gemini 3.7 Flash. Executes exactly one briefed task - writes the failing test first, implements the minimal change, makes the suite pass, runs lint, reports real output. Full write access.
+description: Implementation engineer on Gemini 3.8 Flash. Executes exactly one briefed task - writes the failing test first, implements the minimal change, makes the suite pass, runs lint, reports real output. Full write access.
 mode: subagent
-model: google/gemini-3.7-flash
+model: google/gemini-3.8-flash
 temperature: 0.1
 # no steps cap: hitting it makes Kilo append a trailing model-turn wrap-up,
-# which gemini-3.7-flash rejects ("Requests ending with a model turn are not
-# supported") - verified live 2026-08-08; same failure class as the Opus
-# prefill bug (kilocode #8260). No agent in this pipeline may set steps.
+# which Gemini Flash rejects ("Requests ending with a model turn are not
+# supported") - verified live 2026-08-08 on gemini-3.7-flash; same failure
+# class as the Opus prefill bug (kilocode #8260). No agent in this pipeline
+# may set steps.
 # The five interactive/turn-control tools are denied for every subagent -
 # the same set Kilo's own headless `kilo run` denies. A child session has no
 # user attached, so any of them wedges the child and leaves the conductor's

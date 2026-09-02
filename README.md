@@ -11,13 +11,13 @@ No Kilo account or gateway required - you bring your own API keys.
 
 | Agent | Model | Role |
 |---|---|---|
-| **conductor** | gemini-3.7-flash *(Google)* | Default entry point. Sizes every request into a lane - ANSWER, DIRECT, or PIPELINE - and routes it. Never writes code. |
-| **quick** | gemini-3.7-flash *(Google)* | User-selected solo fast lane (`Tab` / `--agent quick`): one-sentence tasks end to end, no pipeline, no plan files. |
+| **conductor** | gemini-3.8-flash *(Google)* | Default entry point. Sizes every request into a lane - ANSWER, DIRECT, or PIPELINE - and routes it. Never writes code. |
+| **quick** | gemini-3.8-flash *(Google)* | User-selected solo fast lane (`Tab` / `--agent quick`): one-sentence tasks end to end, no pipeline, no plan files. |
 | **planner** | claude-opus-5 *(Bedrock)* | PIPELINE lane only. Researches the repo, writes an exhaustive plan file, tags each task `EASY`/`HARD` and its verification depth. |
-| **coder** | gemini-3.7-flash *(Google)* | First-line implementer: failing test first (code only), minimal diff, commit per task. |
+| **coder** | gemini-3.8-flash *(Google)* | First-line implementer: failing test first (code only), minimal diff, commit per task. |
 | **opus-coder** | claude-opus-5 *(Bedrock)* | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
 | **verifier** | claude-opus-5 *(Bedrock)* | Adversarial PIPELINE gate: runs the suite, probes edge cases empirically, separates BLOCKING findings from advisory NOTES. |
-| **verifier-lite** | gemini-3.7-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
+| **verifier-lite** | gemini-3.8-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
 | **boss** | claude-fable-5 @ max reasoning *(Anthropic)* | User-summoned solo heavyweight (`Tab` / `--agent boss` / naming `@boss`): coding, planning, verifying, debugging for tasks the user judges worth the biggest model. Never auto-routed. |
 
 Opus runs through **Amazon Bedrock** on the EU inference profile

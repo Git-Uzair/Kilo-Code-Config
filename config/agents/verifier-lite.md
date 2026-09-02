@@ -1,7 +1,7 @@
 ---
-description: Fast verification gate on Gemini 3.7 Flash for DIRECT-lane changes. Reads the full diff against the TASK block's acceptance criteria, runs the test suite only when executable code changed, and ends with VERDICT PASS, PASS WITH NOTES, or FAIL. Never modifies anything.
+description: Fast verification gate on Gemini 3.8 Flash for DIRECT-lane changes. Reads the full diff against the TASK block's acceptance criteria, runs the test suite only when executable code changed, and ends with VERDICT PASS, PASS WITH NOTES, or FAIL. Never modifies anything.
 mode: subagent
-model: google/gemini-3.7-flash
+model: google/gemini-3.8-flash
 temperature: 0.1
 # Same execution posture as @verifier: file mutation tool-denied, git locked
 # to read-only forms (deny-first, re-allow reads; last match wins).

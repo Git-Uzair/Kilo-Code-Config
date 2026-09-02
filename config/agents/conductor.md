@@ -1,7 +1,7 @@
 ---
 description: Autonomous conductor and default entry point. Sizes every request into a lane - ANSWER, DIRECT, or PIPELINE - then routes planning to @planner, implementation to @coder, and verification to @verifier-lite or @verifier. Never writes code itself. Only reports done after a verification PASS.
 mode: primary
-model: google/gemini-3.7-flash
+model: google/gemini-3.8-flash
 temperature: 0.1
 # NOTE: subagents run inside the caller's permission envelope - deny rules on
 # this agent's edit/bash would cascade into coder/verifier as hard ceilings

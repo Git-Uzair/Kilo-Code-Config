@@ -8,12 +8,12 @@
   "default_agent": "conductor",
 
   // Cheap default. The pipeline pins its own models per agent:
-  // conductor/coder/quick/verifier-lite = google/gemini-3.7-flash;
+  // conductor/coder/quick/verifier-lite = google/gemini-3.8-flash;
   // planner/opus-coder/verifier = amazon-bedrock/eu.anthropic.claude-opus-5;
   // boss = anthropic/claude-fable-5 at variant max
   // (see ~/.config/kilo/agents/*.md).
-  "model": "google/gemini-3.7-flash",
-  "small_model": "google/gemini-3.7-flash",
+  "model": "google/gemini-3.8-flash",
+  "small_model": "google/gemini-3.8-flash",
   "instructions": ["~/.config/kilo/instructions.md"],
 
   // Enables the `websearch` tool. NOT provider-native, and not billed to the
@@ -71,11 +71,11 @@
   // to the cheap model so an Opus caller never silently fans out at Opus
   // prices and housekeeping never burns Opus tokens.
   "agent": {
-    "explore": { "model": "google/gemini-3.7-flash" },
-    "general": { "model": "google/gemini-3.7-flash" },
-    "title": { "model": "google/gemini-3.7-flash" },
-    "summary": { "model": "google/gemini-3.7-flash" },
-    "compaction": { "model": "google/gemini-3.7-flash" },
+    "explore": { "model": "google/gemini-3.8-flash" },
+    "general": { "model": "google/gemini-3.8-flash" },
+    "title": { "model": "google/gemini-3.8-flash" },
+    "summary": { "model": "google/gemini-3.8-flash" },
+    "compaction": { "model": "google/gemini-3.8-flash" },
     // Kilo's deprecated built-in orchestrator: a name-trap next to our
     // conductor in the agent picker - it hijacked a run once (generic
     // delegation, no pipeline discipline). Keep it off.

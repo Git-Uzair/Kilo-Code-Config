@@ -1,7 +1,7 @@
 ---
 description: Fast solo agent for attended use. Handles one-sentence tasks end to end by itself - no planner, no verifier, no subagents, no plan files. Switch to it (Tab in the TUI, or --agent quick) when you know the task is small and you are watching the result.
 mode: primary
-model: google/gemini-3.7-flash
+model: google/gemini-3.8-flash
 temperature: 0.1
 # Deliberately cannot delegate: quick exists to NOT summon the pipeline.
 # suggest denied: a trailing suggest call keeps the session spinning
