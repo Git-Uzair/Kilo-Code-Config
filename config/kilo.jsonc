@@ -10,7 +10,8 @@
   // Cheap default. The pipeline pins its own models per agent:
   // conductor/coder/quick/verifier-lite = google/gemini-3.8-flash;
   // planner/opus-coder/verifier = amazon-bedrock/eu.anthropic.claude-opus-5;
-  // boss = anthropic/claude-fable-5 at variant max
+  // boss = anthropic/claude-fable-5 at variant max;
+  // astra = openai/gpt-6-astra at variant high
   // (see ~/.config/kilo/agents/*.md).
   "model": "google/gemini-3.8-flash",
   "small_model": "google/gemini-3.8-flash",
@@ -39,12 +40,18 @@
     // (kilo.db's AI_APICallError records carry the bad URL; the identical
     // request replayed at /v1/messages returns 200). The SDK appends
     // /messages to this value. Google and Bedrock are unaffected.
+    // Kept under the 7.5.16 pin (2026-09-09): not re-verified whether still
+    // needed there - harmless on versions that build the URL correctly.
     "anthropic": {
       "options": {
         "baseURL": "https://api.anthropic.com/v1",
         "apiKey": "{env:ANTHROPIC_API_KEY}"
       }
     },
+    // Live for @astra (openai/gpt-6-astra at variant high). Key from the
+    // user-scope env var - never in this file. Added 2026-09-09 under the
+    // 7.5.16 pin; the pipeline minus astra runs fine without the key.
+    "openai": { "env": ["OPENAI_API_KEY"] },
     // Opus agents run here. The only credential is the user-scope Bedrock API
     // key (AWS_BEARER_TOKEN_BEDROCK) - never in this file.
     //
@@ -59,7 +66,7 @@
     // list is fixed by AWS, so requests never leave the EU.
     "amazon-bedrock": { "options": { "region": "eu-west-1" } }
   },
-  "enabled_providers": ["google", "anthropic", "amazon-bedrock"],
+  "enabled_providers": ["google", "anthropic", "amazon-bedrock", "openai"],
 
   "formatter": true,
   "lsp": true,

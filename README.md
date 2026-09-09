@@ -3,7 +3,9 @@
 A production-hardened global configuration for the [Kilo Code CLI](https://kilo.ai)
 that turns it into an unattended multi-agent engineering pipeline: point it at a
 repo, give it a task, walk away. Built and battle-tested on Windows 11 against
-Kilo CLI 7.4.22; the config itself is OS-agnostic.
+Kilo CLI 7.4.22; pinned to 7.5.16 since 2026-09-09. The battle-testing and the
+design notes below all predate that bump - none of them has been re-verified
+on 7.5.16 yet. The config itself is OS-agnostic.
 
 No Kilo account or gateway required - you bring your own API keys.
 
@@ -19,6 +21,7 @@ No Kilo account or gateway required - you bring your own API keys.
 | **verifier** | claude-opus-5 *(Bedrock)* | Adversarial PIPELINE gate: runs the suite, probes edge cases empirically, separates BLOCKING findings from advisory NOTES. |
 | **verifier-lite** | gemini-3.8-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
 | **boss** | claude-fable-5 @ max reasoning *(Anthropic)* | User-summoned solo heavyweight (`Tab` / `--agent boss` / naming `@boss`): coding, planning, verifying, debugging for tasks the user judges worth the biggest model. Never auto-routed. |
+| **astra** | gpt-6-astra @ high reasoning *(OpenAI)* | Second user-summoned heavyweight (`Tab` / `--agent astra` / naming `@astra`): same contract as boss on OpenAI's top reasoning model. Never auto-routed. |
 
 Opus runs through **Amazon Bedrock** on the EU inference profile
 (`amazon-bedrock/eu.anthropic.claude-opus-5`), not the Anthropic API. Same
@@ -31,6 +34,12 @@ mode (enabled only in eu-west-1 for this account), Fable has no `eu.`
 inference profile, and the `global.` profile fanned out worldwide at
 ~1-in-3 success when traced (2026-08-21). It moves back the day the account
 gets a usable profile - a one-line model swap in `config/agents/boss.md`.
+
+The `openai` provider is live for **astra** (`openai/gpt-6-astra` at high
+reasoning effort, the registry's middle setting of
+low/medium/high/xhigh/max). Added 2026-09-09 under the 7.5.16 pin and not
+yet live-verified end to end - the wiring mirrors boss, the scars are still
+boss's own.
 
 Flow is proportional to the request. Questions are answered (ANSWER lane).
 Changes that are already fully specified - renames, find-and-replace, config
@@ -66,6 +75,8 @@ stall on prompts. A hardened deny-list blocks the destructive stuff outright
   - `ANTHROPIC_API_KEY` - powers **boss** (Fable 5) and doubles as the Opus
     rollback path. Must belong to an org with Claude Fable 5 access. The
     pipeline minus boss runs fine without it.
+  - `OPENAI_API_KEY` - powers **astra** (GPT-6 Astra). Must belong to an org
+    with GPT-6 Astra access. The pipeline minus astra runs fine without it.
   - `FIRECRAWL_API_KEY` *(optional)* - powers the agents' web search via MCP; without it, remove the `mcp.firecrawl` block from `config/kilo.jsonc`
 
 No `AWS_REGION` needed - the region is pinned in `config/kilo.jsonc` under the
@@ -78,7 +89,7 @@ model IDs' geo prefix (`eu.`) in `config/agents/*.md` in step with it.
 # Windows
 git clone https://github.com/Git-Uzair/Kilo-Code-Config.git kilo-config
 cd kilo-config
-./install.ps1            # pins @kilocode/cli@7.4.22 (tested); -Latest for newest
+./install.ps1            # pins @kilocode/cli@7.5.16; -Latest for newest
 ```
 
 ```bash
@@ -95,7 +106,7 @@ the env-var commands for your keys. Then verify:
 
 ```powershell
 kilo agent list   # expect: conductor, quick, planner, coder, opus-coder,
-                  #         verifier, verifier-lite, boss
+                  #         verifier, verifier-lite, boss, astra
 ```
 
 ## Usage
@@ -111,7 +122,7 @@ kilo
 kilo --agent quick        # or Tab to `quick` inside the TUI
 
 # talk to a specialist directly
-#   @planner  @coder  @verifier  @opus-coder  @boss   (in the TUI message box)
+#   @planner  @coder  @verifier  @opus-coder  @boss  @astra   (in the TUI message box)
 
 # force the fast path through the conductor in plain words
 #   "this is small, skip the plan" - the conductor's DIRECT lane is binding
@@ -121,6 +132,9 @@ kilo --agent quick        # or Tab to `quick` inside the TUI
 
 # the hardest tasks, worth the biggest model (Fable 5 @ max reasoning)
 kilo --agent boss         # or name @boss in a request - never auto-routed
+
+# same contract on OpenAI's top reasoning model (GPT-6 Astra @ high)
+kilo --agent astra        # or name @astra in a request - never auto-routed
 ```
 
 Plans land in `docs/plans/<date>-<slug>.md` inside the target repo and double
@@ -138,7 +152,11 @@ agents fall back to plain reads. Needs Python 3.10+; install by hand with
 
 ## Design notes (the scars behind the choices)
 
-Each of these cost a broken run to learn; the config encodes the fix:
+Each of these cost a broken run to learn; the config encodes the fix.
+**Version caveat:** every finding below was established on kilo
+7.4.20-7.4.23. The pin moved to 7.5.16 on 2026-09-09 and none of them has
+been re-verified there; the workarounds are all kept - each is harmless on
+a version that fixed the underlying bug - until someone re-tests them:
 
 - **Subagents inherit the caller's permission ceiling.** Deny rules on the
   conductor cascade into every worker as unoverridable ceilings - so the
@@ -223,7 +241,7 @@ Each of these cost a broken run to learn; the config encodes the fix:
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the eight agents (system prompt + permissions each)
+config/agents/*.md         the nine agents (system prompt + permissions each)
 scripts/update-skills.ps1  pulls skill repos, re-copies the curated set
 skills/codebase-map/       local skill: free AST repo map via kopipasta
 install.ps1 / install.sh   one-shot setup

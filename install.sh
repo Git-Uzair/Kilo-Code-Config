@@ -2,7 +2,12 @@
 # Kilo multi-agent pipeline - macOS/Linux installer
 # Idempotent: backs up existing config first.
 set -euo pipefail
-PIN="7.4.22"
+# Pin moved 7.4.22 -> 7.5.16 on 2026-09-09. The version-specific findings
+# this config encodes (README design notes, the anthropic baseURL pin, the
+# grep/Bun hang, steps-cap and turn-control workarounds) were established
+# on 7.4.20-7.4.23 and have NOT been re-verified on 7.5.16 - they are kept
+# as-is until proven fixed.
+PIN="7.5.16"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 PKG="@kilocode/cli@${PIN}"
@@ -88,6 +93,7 @@ echo "== Set your API keys (add to your shell profile) =="
 echo '  export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"'
 echo '  export AWS_BEARER_TOKEN_BEDROCK="<your-bedrock-api-key>"'
 echo '  export ANTHROPIC_API_KEY="<anthropic-key-for-boss>"'
+echo '  export OPENAI_API_KEY="<openai-key-for-astra>"'
 echo '  export FIRECRAWL_API_KEY="<optional-firecrawl-key>"'
 echo '  export GEMINI_API_KEY="<optional-key-for-kopipasta-ask>"'
 echo "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
@@ -109,5 +115,5 @@ echo "== Agent roster =="
 # to the console; roster lines are on stdout
 kilo agent list | grep -E '^\S+ \((primary|subagent|all)\)' || true
 echo ""
-echo "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite, boss."
+echo "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite, boss, astra."
 echo 'Try:  kilo run --dir <repo> --auto "your task"'

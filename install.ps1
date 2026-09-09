@@ -4,7 +4,12 @@ param(
     [switch]$Latest  # install newest @kilocode/cli instead of the tested pin
 )
 $ErrorActionPreference = 'Stop'
-$pin = '7.4.22'
+# Pin moved 7.4.22 -> 7.5.16 on 2026-09-09. The version-specific findings
+# this config encodes (README design notes, the anthropic baseURL pin, the
+# grep/Bun hang, steps-cap and turn-control workarounds) were established
+# on 7.4.20-7.4.23 and have NOT been re-verified on 7.5.16 - they are kept
+# as-is until proven fixed.
+$pin = '7.5.16'
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
@@ -111,6 +116,7 @@ Write-Host "== Set your API keys (user scope, new terminals pick them up) ==" -F
 Write-Host '  [Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK","<your-bedrock-api-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<anthropic-key-for-boss>","User")'
+Write-Host '  [Environment]::SetEnvironmentVariable("OPENAI_API_KEY","<openai-key-for-astra>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY","<optional-firecrawl-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("GEMINI_API_KEY","<optional-key-for-kopipasta-ask>","User")'
 Write-Host "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
@@ -138,5 +144,5 @@ Write-Host "== Agent roster ==" -ForegroundColor Cyan
 # stderr streams to the console as live progress.
 kilo agent list | Select-String -Pattern '^\S+ \((primary|subagent|all)\)' | ForEach-Object { $_.Line }
 Write-Host ""
-Write-Host "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite, boss."
+Write-Host "Done. Expected custom agents: conductor, quick, planner, coder, opus-coder, verifier, verifier-lite, boss, astra."
 Write-Host "Try:  kilo run --dir <repo> --auto `"your task`""
