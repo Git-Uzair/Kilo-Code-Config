@@ -3,9 +3,11 @@
 A production-hardened global configuration for the [Kilo Code CLI](https://kilo.ai)
 that turns it into an unattended multi-agent engineering pipeline: point it at a
 repo, give it a task, walk away. Built and battle-tested on Windows 11 against
-Kilo CLI 7.4.22; pinned to 7.5.16 since 2026-09-09. The battle-testing and the
-design notes below all predate that bump - none of them has been re-verified
-on 7.5.16 yet. The config itself is OS-agnostic.
+Kilo CLI 7.4.22; pinned to 7.7.1 since 2026-09-15 (previously 7.5.16). The
+bump is load-bearing: the worker agent's resume-based PIPELINE, the Kilo
+Swarm shared board, codebase indexing, and wakeup scheduling all need
+>=7.6/7.7. The battle-testing and the design notes below predate 7.5.x -
+none has been re-verified on 7.7.1 yet. The config itself is OS-agnostic.
 
 No Kilo account or gateway required - you bring your own API keys.
 
@@ -89,7 +91,7 @@ model IDs' geo prefix (`eu.`) in `config/agents/*.md` in step with it.
 # Windows
 git clone https://github.com/Git-Uzair/Kilo-Code-Config.git kilo-config
 cd kilo-config
-./install.ps1            # pins @kilocode/cli@7.5.16; -Latest for newest
+./install.ps1            # pins @kilocode/cli@7.7.1; -Latest for newest
 ```
 
 ```bash
@@ -154,9 +156,12 @@ agents fall back to plain reads. Needs Python 3.10+; install by hand with
 
 Each of these cost a broken run to learn; the config encodes the fix.
 **Version caveat:** every finding below was established on kilo
-7.4.20-7.4.23. The pin moved to 7.5.16 on 2026-09-09 and none of them has
-been re-verified there; the workarounds are all kept - each is harmless on
-a version that fixed the underlying bug - until someone re-tests them:
+7.4.20-7.4.23. The pin moved to 7.5.16 on 2026-09-09 and to 7.7.1 on
+2026-09-15, and none of them has been re-verified since; the workarounds
+are all kept - each is harmless on a version that fixed the underlying
+bug - until someone re-tests them. One is now moot by upstream removal:
+`interactive_terminal` was deleted from the CLI in 7.6.0, so its deny
+lines are inert on 7.7.1 and retained only for older installs:
 
 - **Subagents inherit the caller's permission ceiling.** Deny rules on the
   conductor cascade into every worker as unoverridable ceilings - so the

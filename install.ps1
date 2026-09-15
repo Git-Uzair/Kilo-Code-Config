@@ -4,12 +4,17 @@ param(
     [switch]$Latest  # install newest @kilocode/cli instead of the tested pin
 )
 $ErrorActionPreference = 'Stop'
-# Pin moved 7.4.22 -> 7.5.16 on 2026-09-09. The version-specific findings
-# this config encodes (README design notes, the anthropic baseURL pin, the
-# grep/Bun hang, steps-cap and turn-control workarounds) were established
-# on 7.4.20-7.4.23 and have NOT been re-verified on 7.5.16 - they are kept
-# as-is until proven fixed.
-$pin = '7.5.16'
+# Pin history: 7.4.22 -> 7.5.16 (2026-09-09) -> 7.7.1 (2026-09-15). The
+# 7.7.1 bump is required by the config itself: the worker agent's
+# resume-based PIPELINE, the Kilo Swarm shared board (on by default since
+# 7.7.0), codebase indexing / semantic_search, and wakeup scheduling all
+# need >=7.6/7.7. The 7.4.x-era findings this config encodes (README design
+# notes, the anthropic baseURL pin, the grep/Bun hang, steps-cap and
+# turn-control workarounds) have NOT been re-verified on 7.7.1 - each is
+# harmless on a version that fixed the underlying bug, so all are kept.
+# (interactive_terminal was removed upstream in 7.6.0; its deny lines are
+# inert on 7.7.1 and retained only for older installs.)
+$pin = '7.7.1'
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
