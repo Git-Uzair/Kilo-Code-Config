@@ -24,6 +24,11 @@ do not re-derive.
   installed live config lives at `~/.config/kilo/` - editing that
   directly is always wrong here; edit `config/` and re-run `install.ps1`
   (or copy the changed file over manually when asked).
+- The PIPELINE lane runs on `config/agents/worker.md`: one Flash session
+  plans, then implements each task via `task_id` resume. Worker-authored
+  plans in `docs/plans/` are deliberately lighter than `@planner`'s
+  exhaustive stranger-executable format - the author executes them
+  itself. Do not "fix" a lighter worker plan into the planner format.
 - Commits go straight to `main`, one commit per task, message style per
   `git log` (`feat:`, `fix:`, `docs:`, `chore:`, `agents:`). Push only
   when asked.

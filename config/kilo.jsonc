@@ -8,7 +8,7 @@
   "default_agent": "conductor",
 
   // Cheap default. The pipeline pins its own models per agent:
-  // conductor/coder/quick/verifier-lite = google/gemini-3.8-flash;
+  // conductor/worker/coder/quick/verifier-lite = google/gemini-3.8-flash;
   // planner/opus-coder/verifier = amazon-bedrock/eu.anthropic.claude-opus-5;
   // boss = anthropic/claude-fable-5 at variant max;
   // astra = openai/gpt-6-astra at variant high

@@ -17,8 +17,9 @@ No Kilo account or gateway required - you bring your own API keys.
 |---|---|---|
 | **conductor** | gemini-3.8-flash *(Google)* | Default entry point. Sizes every request into a lane - ANSWER, DIRECT, or PIPELINE - and routes it. Never writes code. |
 | **quick** | gemini-3.8-flash *(Google)* | User-selected solo fast lane (`Tab` / `--agent quick`): one-sentence tasks end to end, no pipeline, no plan files. |
-| **planner** | claude-opus-5 *(Bedrock)* | PIPELINE lane only. Researches the repo, writes an exhaustive plan file, tags each task `EASY`/`HARD` and its verification depth. |
-| **coder** | gemini-3.8-flash *(Google)* | First-line implementer: failing test first (code only), minimal diff, commit per task. |
+| **worker** | gemini-3.8-flash *(Google)* | PIPELINE implementer. ONE persistent session per run: researches and writes the plan on first dispatch, then implements each task via `task_id` resume with its repo understanding intact. |
+| **planner** | claude-opus-5 *(Bedrock)* | Explicit-request-only since 2026-09-15 (name `@planner` or ask for a deep/Opus plan). Writes the exhaustive stranger-executable plan format. |
+| **coder** | gemini-3.8-flash *(Google)* | DIRECT-lane implementer: failing test first (code only), minimal diff, commit per task. |
 | **opus-coder** | claude-opus-5 *(Bedrock)* | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
 | **verifier** | claude-opus-5 *(Bedrock)* | Adversarial PIPELINE gate: runs the suite, probes edge cases empirically, separates BLOCKING findings from advisory NOTES. |
 | **verifier-lite** | gemini-3.8-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
@@ -47,7 +48,11 @@ Flow is proportional to the request. Questions are answered (ANSWER lane).
 Changes that are already fully specified - renames, find-and-replace, config
 values, docs edits, any file count - skip planning entirely: brief → implement
 → diff-read verification (DIRECT lane). Only work that genuinely needs design
-gets the full plan → implement → verify loop (PIPELINE lane). Verdicts are
+gets the full plan → implement → verify loop (PIPELINE lane). PIPELINE runs
+on one persistent @worker session: dispatched once to research and write the
+plan, then resumed per task with all of its research still in context - repo
+understanding is paid once per run instead of once per agent, and the reused
+prefix rides provider prompt caching instead of re-reading files. Verdicts are
 three-valued - `PASS`, `PASS WITH NOTES`, `FAIL` - and only BLOCKING findings
 (unmet acceptance criteria, failing tests, secrets) can FAIL; style and
 hygiene observations are advisory NOTES that never trigger a fix cycle.
@@ -107,8 +112,8 @@ repositories, installs the curated skill set plus the local skills in
 the env-var commands for your keys. Then verify:
 
 ```powershell
-kilo agent list   # expect: conductor, quick, planner, coder, opus-coder,
-                  #         verifier, verifier-lite, boss, astra
+kilo agent list   # expect: conductor, quick, worker, planner, coder,
+                  #         opus-coder, verifier, verifier-lite, boss, astra
 ```
 
 ## Usage
@@ -125,6 +130,9 @@ kilo --agent quick        # or Tab to `quick` inside the TUI
 
 # talk to a specialist directly
 #   @planner  @coder  @verifier  @opus-coder  @boss  @astra   (in the TUI message box)
+
+# want the exhaustive Opus plan instead of the worker's lighter one?
+#   name it: "@planner plan this" - execution then goes to a fresh worker
 
 # force the fast path through the conductor in plain words
 #   "this is small, skip the plan" - the conductor's DIRECT lane is binding
@@ -177,8 +185,38 @@ lines are inert on 7.7.1 and retained only for older installs:
   append-edits with a `PLAN COMPLETE` end marker, and the conductor refuses
   to execute a plan without the marker.
 - **Subagent sessions snapshot their permissions at spawn.** Config fixes
-  never reach a resumed `task_id` - the conductor is instructed to dispatch
-  fresh tasks instead, especially after any denial.
+  never reach a resumed `task_id`, so after any permission denial in a
+  child, any mid-run config change, or a failed resume, the conductor
+  dispatches FRESH (for the worker: degraded mode, pointed at the plan
+  file). Everywhere else resuming is now the mechanism, not the exception -
+  see the next bullet.
+- **PIPELINE context reuse via task resume (added 2026-09-15, kilo 7.7.1).**
+  A resumed `task_id` continues the same child session with all its
+  previous messages and tool outputs (7.7.1 runtime task-tool contract;
+  docs: Task tool). The @worker agent is built on this: one Flash session
+  researches, writes the plan, then implements every task via resume - the
+  old planner->coder amnesia (and the exhaustive Opus plan that compensated
+  for it) is gone from the default path. NOT yet smoke-run end to end on
+  this machine: the first post-install PIPELINE run is the smoke test -
+  expect ONE worker child session with multiple user turns
+  (`kilo session list`, or the `session`/`message` tables via `kilo db`),
+  not a row of fresh children.
+- **The Kilo Swarm shared board is on by default since 7.7.0**
+  (`experimental.shared_agent_board: false` disables). A main session and
+  its task descendants exchange `board_post`/`board_read` messages (4 KiB
+  cap). The prompts use it for FACTS, blockers, and corrections; briefs
+  stay authoritative, and verifiers treat posts as leads, never evidence.
+- **Codebase indexing ships configured but disabled** (`indexing` block in
+  `config/kilo.jsonc`: gemini-embedding-001 + embedded LanceDB, key via
+  `{env:GOOGLE_GENERATIVE_AI_API_KEY}`). Flip `enabled` to true to index
+  every workspace, or enable per project via `/indexing` in the TUI; the
+  `semantic_search` tool then appears in every agent's roster and the
+  prompts use it as the first exploration step. Left disabled because it
+  has not been live-run from this machine; prompts degrade gracefully when
+  the tool is absent.
+- **Local recall**: agents are instructed to search past local sessions
+  (titles + high-signal content, current workspace and related worktrees)
+  before re-deriving repo knowledge a previous session already established.
 - **Bedrock's region is pinned in `kilo.jsonc`, not `AWS_REGION`.** An env var
   only reaches processes started *after* it was set, so a TUI already running
   when the var is added inherits a stale environment: auth succeeds, region
@@ -246,7 +284,7 @@ lines are inert on 7.7.1 and retained only for older installs:
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the nine agents (system prompt + permissions each)
+config/agents/*.md         the ten agents (system prompt + permissions each)
 scripts/update-skills.ps1  pulls skill repos, re-copies the curated set
 skills/codebase-map/       local skill: free AST repo map via kopipasta
 install.ps1 / install.sh   one-shot setup
