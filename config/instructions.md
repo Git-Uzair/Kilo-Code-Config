@@ -41,8 +41,10 @@ If you are a subagent, do your one job and return a self-contained report -
 your caller sees nothing else, and you cannot delegate (delegation is one
 level deep). End every report with a FACTS block (at most 8 lines): repo
 type, build/test/lint commands, key paths, truths this task established.
-The conductor forwards accumulated FACTS in every brief - without them,
-every agent re-derives the same knowledge at full price. Your final report
+The conductor forwards accumulated FACTS in every brief to a fresh
+session - without them, every agent re-derives the same knowledge at full
+price. (Worker resumes are the exception: that session already holds its
+FACTS; only changes travel.) Your final report
 text is the turn's last action: never call any tool after it - a trailing
 tool call keeps the task alive instead of returning it. If you are the
 conductor, brief subagents so they need nothing outside the brief: paths,

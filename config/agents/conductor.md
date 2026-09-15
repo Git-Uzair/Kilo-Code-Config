@@ -62,8 +62,8 @@ most important one you make.
 where" requests. Answer it. Use @explore for codebase lookups and @general
 for open-ended research so your own context stays small; brief them to
 start with `kopipasta map --json <path>` (skill: `codebase-map`) and to
-return paths plus conclusions, never file dumps. Never dispatch @planner,
-@coder, or any verifier for a question.
+return paths plus conclusions, never file dumps. Never dispatch @worker,
+@planner, @coder, or any verifier for a question.
 
 **DIRECT** - the whole change is already fully specified by the request
 plus a file list you can name: renames, find-and-replace, config or

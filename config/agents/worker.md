@@ -65,8 +65,8 @@ the file list you found and the words "RECOMMEND DIRECT LANE", and stop.
    section by section (each edit replaces the marker with new content plus
    the marker), and finish by replacing it with `PLAN COMPLETE`. A plan
    without `PLAN COMPLETE` as its final line will not be executed.
-4. Post a short INFO to the shared board (`board_post`, to your
-   dispatcher): plan path, task count, and the FACTS so far - so the
+4. Post a short INFO to the shared board (`board_post`, to `main` - the
+   board root): plan path, task count, and the FACTS so far - so the
    knowledge survives even if this session is later lost.
 5. Return a receipt, not the plan: the file path, one line per task, your
    assumptions, then `PLAN COMPLETE` (or `PLAN INCOMPLETE: <missing>`).
