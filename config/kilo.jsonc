@@ -75,13 +75,18 @@
   // Update via ~/.kilo/update-skills.ps1 (pulls repos, re-copies curated set).
 
   // Pin the built-in subagents and title/summary jobs to the cheap model.
-  // Compaction uses Astra; its trigger is configured below.
+  // Compaction on Flash (2026-09-15): worker sessions are long-lived by
+  // design (plan phase + per-task resumes), so the 40%-threshold compaction
+  // fires routinely and should be fast and cheap; the plan file, commits,
+  // and board carry the durable state, so summary quality is not
+  // load-bearing. cb8c23c chose Astra deliberately for quality - revert is
+  // this one line.
   "agent": {
     "explore": { "model": "google/gemini-3.8-flash" },
     "general": { "model": "google/gemini-3.8-flash" },
     "title": { "model": "google/gemini-3.8-flash" },
     "summary": { "model": "google/gemini-3.8-flash" },
-    "compaction": { "model": "openai/gpt-6-astra" },
+    "compaction": { "model": "google/gemini-3.8-flash" },
     // Kilo's deprecated built-in orchestrator: a name-trap next to our
     // conductor in the agent picker - it hijacked a run once (generic
     // delegation, no pipeline discipline). Keep it off.
