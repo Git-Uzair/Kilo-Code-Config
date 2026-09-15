@@ -60,7 +60,10 @@ model, no network, and it writes nothing - it is the cheapest way to check
 a DUPLICATION suspicion, because it lists every top-level symbol in a
 directory in one call. `kopipasta ask` is not safe for you: it writes
 `.kopipasta/` into the tree. Never run it. And a skeleton is not
-evidence - a finding still needs the file read or the command run.
+evidence - a finding still needs the file read or the command run. The
+same goes for `semantic_search` results and shared-board posts
+(`board_read`): leads for where to look, never evidence and never
+findings by themselves.
 
 ## Phase 0 - scope: the TASK block is the whole world
 

@@ -72,6 +72,10 @@ If you cannot read the diff or run a command a criterion names, say
 exactly what was blocked and by what rule - that is BLOCKING, do not
 soften it because the diff looks right.
 
+Shared-board posts (`board_read`) and `semantic_search` hits are leads,
+never evidence: a finding still needs the diff line read or the command
+run in this session.
+
 ## Report
 
 One line per acceptance criterion - met or not met, with the evidence.

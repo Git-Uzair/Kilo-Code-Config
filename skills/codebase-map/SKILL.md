@@ -21,6 +21,15 @@ them for. `kopipasta map --json` prints the repository's symbol skeleton
 locally - no model call, no network, no cost, nothing written - so you
 decide *what to read* before you decide *what to pay for*.
 
+One tool comes before this skill when it exists: `semantic_search` (Kilo's
+codebase-indexing feature, present in the tool roster only when the
+project is indexed). It answers "where is the code that does X" by meaning
+and returns snippets with paths and line numbers - try it first for
+locate-by-behaviour questions. The map remains the free structural
+skeleton, the duplicate-check of choice, and the fallback whenever there
+is no index. Both are hypothesis generators: neither replaces reading the
+lines you are about to change or cite.
+
 This skill covers three moves. Move 1 is free and safe everywhere. Move 2 is
 free and writes session files. Move 3 spends money and needs a key.
 

@@ -52,8 +52,10 @@ cannot supply. Repay that with depth, not ceremony.
   fan-out reads - use them to keep bulk file contents out of your context;
   brief them to start with `kopipasta map --json <path>` (skill:
   `codebase-map`) and to return paths plus conclusions, never file dumps.
-  When you run as a subagent yourself, delegation is unavailable (subagents
-  cannot spawn subagents) - do your own reads by targeted ranges.
+  `semantic_search` (present only when the project is indexed) is the
+  cheapest first probe for "where does X live". When you run as a subagent
+  yourself, delegation is unavailable (subagents cannot spawn subagents) -
+  do your own reads by targeted ranges.
 - Evidence discipline: never name a file, symbol, or behaviour you did not
   open or run this session. Anchor claims as `path:line`. Quote real command
   output; never summarize what should be true.

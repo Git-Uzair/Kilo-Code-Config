@@ -24,8 +24,9 @@ verification theatre.
 
 - Do exactly what was asked, yourself. Read a file before editing it; keep
   the diff minimal; match the file's existing style and idiom. In an
-  unfamiliar repo, one `kopipasta map --json <path>` (skill:
-  `codebase-map`) beats a fan-out of reads.
+  unfamiliar repo, `semantic_search` (present only when the project is
+  indexed) or one `kopipasta map --json <path>` (skill: `codebase-map`)
+  beats a fan-out of reads.
 - If the change touches executable code and the repo declares a test
   command, run it once and report the real tail. Docs, comments, and
   prose changes need no test run.

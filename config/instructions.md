@@ -16,12 +16,26 @@ The conductor sizes every request into a lane and cost follows the lane:
 ANSWER (a question - answered directly, no implementers), DIRECT (a change
 already fully specified by the request - conductor -> @coder ->
 @verifier-lite, no plan file), or PIPELINE (work needing design -
-conductor -> @planner -> @coder -> @verifier), with @opus-coder as the
-escalation implementer for HARD or repeatedly failed tasks. PIPELINE work
-gets a plan; every change gets verified before being called done, at a
-depth proportional to the change - prose diffs are read, executable diffs
-are run. @quick is the user-selected solo fast lane and sits outside the
+conductor -> @worker -> @verifier), with @opus-coder as the escalation
+implementer for HARD or repeatedly failed tasks and @planner as the
+explicit-request-only deep planner. PIPELINE runs on ONE persistent
+@worker session: dispatched once to research and write the plan, then
+resumed per task, so repo understanding is paid once per run instead of
+once per agent. PIPELINE work gets a plan; every change gets verified
+before being called done, at a depth proportional to the change - prose
+diffs are read, executable diffs are run. Implementers never verify their
+own work. @quick is the user-selected solo fast lane and sits outside the
 pipeline entirely.
+
+## The shared board
+
+A main session and its task children share a message board (`board_post` /
+`board_read`, max 4 KiB per post). Post material findings as you work -
+FACTS, blockers, corrections of earlier findings - and read the board
+before dependent decisions. It supplements briefs, never replaces them:
+briefs are guaranteed-delivered, board reads are not, and a board post
+never replaces a final report. Verifiers treat board content as leads,
+never as evidence.
 
 If you are a subagent, do your one job and return a self-contained report -
 your caller sees nothing else, and you cannot delegate (delegation is one
@@ -85,6 +99,9 @@ Check for a relevant skill before starting. Say which skill you are using.
 - If an edit fails to apply or output contradicts your mental model, re-read
   the file from disk before retrying. Two failures on the same file: re-read
   the whole file and restate your approach.
+- Before re-deriving knowledge about a repo you worked in before, search
+  local recall for the earlier session and read its conclusions - then
+  verify anything you act on against the current working tree.
 
 ## Code discipline
 
@@ -109,15 +126,17 @@ Check for a relevant skill before starting. Say which skill you are using.
 
 ## Context economy
 
-- Map before you read. In a repo you do not already know, the first
-  exploration step is a zero-cost AST skeleton -
-  `kopipasta map --json <path>` (skill: `codebase-map`) - and only then do
-  you open the two to five files it pointed at. Reading files to work out
-  which files matter spends the context you needed them for. The map
-  narrows the target; it never replaces the read: `path:line` claims,
-  edits, and citations still come from the file itself, opened by ranges.
-  No kopipasta on PATH? Say so and fall back to a narrow `glob` plus
-  anchored `grep`.
+- Cheap context first, in order. (1) `semantic_search`, when the project
+  is indexed: natural-language lookup ("where is retry handled?")
+  returning snippets with paths and line numbers - if the tool is absent
+  the project has no index; skip it, never block on it. (2) The zero-cost
+  AST skeleton: `kopipasta map --json <path>` (skill: `codebase-map`).
+  (3) Targeted reads of the two to five files those pointed at. Reading
+  files to work out which files matter spends the context you needed them
+  for. Search hits and maps narrow the target; they never replace the
+  read: `path:line` claims, edits, and citations still come from the file
+  itself, opened by ranges. No kopipasta on PATH? Say so and fall back to
+  a narrow `glob` plus anchored `grep`.
 - Conductor: exploration expected to touch more than ~3 files goes to
   @explore or @general; they return paths and short conclusions, never file
   dumps. Subagents: read by targeted ranges instead - you cannot delegate.
