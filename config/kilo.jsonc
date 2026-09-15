@@ -103,6 +103,31 @@
   // Context economy: trim old tool outputs, auto-compact long sessions.
   "compaction": { "auto": true, "prune": true, "threshold_percent": 40 },
 
+  // Codebase indexing -> the `semantic_search` tool: persistent, per-project
+  // repo understanding every agent shares, instead of each subagent
+  // re-deriving "where is X" at full price. Gemini embeddings (same
+  // GOOGLE_GENERATIVE_AI_API_KEY, via {env:} substitution - the mechanism
+  // is proven by the anthropic and firecrawl blocks in this file; only
+  // snippets are sent, never whole files) into LanceDB, which is embedded
+  // and file-based - no server. Docs:
+  // https://kilo.ai/docs/customize/context/codebase-indexing
+  // Shipped DISABLED: the block is fully configured but has never been
+  // live-run from this machine (added 2026-09-15 without an install pass).
+  // To turn it on: flip "enabled" to true (indexes every workspace), or
+  // leave it false and enable per project via /indexing in the TUI; then
+  // watch /indexing reach Complete and check `semantic_search` appears in
+  // the tool roster. Note: the published $schema lags the CLI and may mark
+  // this key unknown in editors; the CLI itself reads it (its /indexing
+  // menu edits this very block).
+  "indexing": {
+    "enabled": false,
+    "provider": "gemini",
+    "model": "gemini-embedding-001",
+    "vectorStore": "lancedb",
+    "gemini": { "apiKey": "{env:GOOGLE_GENERATIVE_AI_API_KEY}" },
+    "lancedb": {}
+  },
+
   // Policy: allow or deny only - never ask. Sessions run unattended.
   // Last matching rule wins.
   "permission": {
