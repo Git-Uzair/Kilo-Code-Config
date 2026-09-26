@@ -95,11 +95,18 @@
 
   // Web search/scrape via Firecrawl MCP; key from user-scope env var.
   // Local stdio keeps the key out of URLs, logs, and `kilo mcp list`.
+  // Browser automation via Playwright MCP (headed Chrome).
   "mcp": {
     "firecrawl": {
       "type": "local",
       "command": ["npx", "-y", "firecrawl-mcp"],
       "environment": { "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}" },
+      "enabled": true,
+      "timeout": 60000
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@latest", "--browser", "chrome"],
       "enabled": true,
       "timeout": 60000
     }

@@ -2,7 +2,7 @@
 # Kilo multi-agent pipeline - macOS/Linux installer
 # Idempotent: backs up existing config first.
 set -euo pipefail
-# Pin history: 7.4.22 -> 7.5.16 (2026-09-09) -> 7.7.1 (2026-09-15). The
+# Pin history: 7.4.22 -> 7.5.16 (2026-09-09) -> 7.7.1 (2026-09-15) -> 7.8.1 (2026-09-26). The
 # 7.7.1 bump is required by the config itself: the worker agent's
 # resume-based PIPELINE, the Kilo Swarm shared board (on by default since
 # 7.7.0), codebase indexing / semantic_search, and wakeup scheduling all
@@ -12,7 +12,7 @@ set -euo pipefail
 # harmless on a version that fixed the underlying bug, so all are kept.
 # (interactive_terminal was removed upstream in 7.6.0; its deny lines are
 # inert on 7.7.1 and retained only for older installs.)
-PIN="7.7.1"
+PIN="7.8.1"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 PKG="@kilocode/cli@${PIN}"
