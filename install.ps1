@@ -133,8 +133,8 @@ Write-Host "    - Use SetEnvironmentVariable above, not setx: setx truncates at 
 Write-Host "      chars and a silently-truncated key fails auth with no clear cause."
 Write-Host "    - Claude Opus 5 model access must be granted in the Bedrock console."
 Write-Host "    - No AWS_REGION needed: the region is pinned in kilo.jsonc."
-Write-Host "    - ANTHROPIC_API_KEY: needed for @boss (Fable 5, org must have model"
-Write-Host "      access); otherwise optional - it is also the Opus rollback path."
+Write-Host "    - ANTHROPIC_API_KEY: needed for @boss (Opus 5.5); otherwise optional -"
+Write-Host "      it is also the Opus rollback path."
 Write-Host ""
 Write-Host "  Already have a kilo TUI open? Restart it." -ForegroundColor Yellow
 Write-Host "  A running process keeps the environment it started with and will not"

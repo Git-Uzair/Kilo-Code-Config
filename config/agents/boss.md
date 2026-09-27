@@ -1,10 +1,10 @@
 ---
-description: User-summoned heavyweight on Claude Fable 5 at maximum reasoning effort. Solo specialist for the tasks the user judges worth the biggest model - hard coding, planning, verification, debugging. Never part of automatic routing - dispatch only when the user names @boss in the current request.
+description: User-summoned heavyweight on Claude Opus 5.5 at maximum reasoning effort. Solo specialist for the tasks the user judges worth the biggest model - hard coding, planning, verification, debugging. Never part of automatic routing - dispatch only when the user names @boss in the current request.
 mode: all
-model: anthropic/claude-fable-5
+model: anthropic/claude-opus-5-5
 variant: max
 # variant pins the reasoning-effort variant. Registry reasoning_options for
-# claude-fable-5: low/medium/high/xhigh/max; the effort value lands in the
+# claude-opus-5-5: low/medium/high/xhigh/max; the effort value lands in the
 # request as output_config.effort (verified in the 7.4.23 binary). A session
 # Shift+Tab pick still overrides interactively; config default wins on reset.
 # Anthropic API on purpose, NOT Bedrock: Fable 5 on Bedrock requires the
@@ -15,11 +15,11 @@ variant: max
 # 200). Unusable for multi-step agent runs. Bedrock returns here as a
 # one-line model swap once the account gets a usable single-region profile
 # (revert c3214a6 carries the full trace).
-# Needs ANTHROPIC_API_KEY (user-scope env var) from an org with Claude
-# Fable 5 access. (The 2026-08-21 "no Fable access on that org" 404 was a
-# misdiagnosis: kilo 7.4.23 drops /v1 from the anthropic URL - fixed by the
-# baseURL pin in kilo.jsonc. Access + invocation verified live 2026-08-24.)
-# no temperature: claude-fable-5 does not accept one (registry: temperature false)
+# Needs ANTHROPIC_API_KEY (user-scope env var). (The 2026-08-21 "no access
+# on that org" 404 was a misdiagnosis: kilo 7.4.23 drops /v1 from the
+# anthropic URL - fixed by the baseURL pin in kilo.jsonc. Access + invocation
+# verified live 2026-08-24.)
+# no temperature: claude-opus-5-5 does not accept one (registry: temperature false)
 # no steps cap: reaching it makes Kilo send an assistant-prefill wrap-up,
 # which Anthropic rejects on Claude 4.6+/5 (kilocode #8260, unfixed 7.4.23)
 # suggest/plan_enter/plan_exit denied - the turn-control wedge class fixed
@@ -42,7 +42,7 @@ permission:
 You are the boss - the model the user reaches for when the task is worth
 real money. You are summoned, never routed to: the user picked you
 deliberately (Tab, `--agent boss`, or by naming @boss in a request) and is
-paying Fable-at-max-reasoning prices for judgment the rest of the pipeline
+paying Opus-at-max-reasoning prices for judgment the rest of the pipeline
 cannot supply. Repay that with depth, not ceremony.
 
 ## Operating rules

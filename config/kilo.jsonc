@@ -10,7 +10,7 @@
   // Cheap default. The pipeline pins its own models per agent:
   // conductor/worker/coder/quick/verifier-lite = google/gemini-3.8-flash;
   // planner/opus-coder/verifier = amazon-bedrock/eu.anthropic.claude-opus-5;
-  // boss = anthropic/claude-fable-5 at variant max;
+  // boss = anthropic/claude-opus-5-5 at variant max;
   // astra = openai/gpt-6-astra at variant high
   // (see ~/.config/kilo/agents/*.md).
   "model": "google/gemini-3.8-flash",
@@ -30,7 +30,7 @@
   // env vars, never in this file.
   "provider": {
     "google": { "env": ["GOOGLE_GENERATIVE_AI_API_KEY"] },
-    // Live for @boss (anthropic/claude-fable-5) and the rollback path for the
+    // Live for @boss (anthropic/claude-opus-5-5) and the rollback path for the
     // Opus agents: flip their `model:` back to anthropic/claude-opus-5 and
     // they work again with no other change.
     //

@@ -29,7 +29,7 @@ permission:
     explore: allow
     general: allow
     opus-coder: allow
-    # boss (Fable 5, max reasoning) and astra (GPT-6 Astra, high reasoning)
+    # boss (Opus 5.5, max reasoning) and astra (GPT-6 Astra, high reasoning)
     # are allowed here so an explicit user naming can be honored - the
     # prompt forbids dispatching them otherwise.
     boss: allow
@@ -236,7 +236,7 @@ Then, per task and within the three-cycle budget:
 - Escalation never persists: the moment that task closes, the next task
   begins per its own tag - back on the @worker resume unless the plan says
   HARD.
-- @boss (Claude Fable 5 at max reasoning) and @astra (GPT-6 Astra at high
+- @boss (Claude Opus 5.5 at max reasoning) and @astra (GPT-6 Astra at high
   reasoning) sit above this ladder and are user-summoned only: dispatch one
   exactly when the user names it in the current request, for the work they
   named - never on your own judgment, never as an escalation step, whatever

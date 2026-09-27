@@ -23,13 +23,13 @@ No Kilo account or gateway required - you bring your own API keys.
 | **opus-coder** | claude-opus-5 *(Bedrock)* | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
 | **verifier** | claude-opus-5 *(Bedrock)* | Adversarial PIPELINE gate: runs the suite, probes edge cases empirically, separates BLOCKING findings from advisory NOTES. |
 | **verifier-lite** | gemini-3.8-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
-| **boss** | claude-fable-5 @ max reasoning *(Anthropic)* | User-summoned solo heavyweight (`Tab` / `--agent boss` / naming `@boss`): coding, planning, verifying, debugging for tasks the user judges worth the biggest model. Never auto-routed. |
+| **boss** | claude-opus-5-5 @ max reasoning *(Anthropic)* | User-summoned solo heavyweight (`Tab` / `--agent boss` / naming `@boss`): coding, planning, verifying, debugging for tasks the user judges worth the biggest model. Never auto-routed. |
 | **astra** | gpt-6-astra @ high reasoning *(OpenAI)* | Second user-summoned heavyweight (`Tab` / `--agent astra` / naming `@astra`): same contract as boss on OpenAI's top reasoning model. Never auto-routed. |
 
 Opus runs through **Amazon Bedrock** on the EU inference profile
 (`amazon-bedrock/eu.anthropic.claude-opus-5`), not the Anthropic API. Same
 model, same list price, EU-pinned routing. The `anthropic` provider is live
-for **boss** (`anthropic/claude-fable-5`) and doubles as the Opus rollback:
+for **boss** (`anthropic/claude-opus-5-5`) and doubles as the Opus rollback:
 flip the three Opus `model:` lines in `config/agents/` back to
 `anthropic/claude-opus-5` and nothing else changes. Boss stays off Bedrock
 deliberately: Fable 5 there requires the `provider_data_share` retention
@@ -79,9 +79,8 @@ stall on prompts. A hardened deny-list blocks the destructive stuff outright
 - API keys (set as env vars during install - never stored in this repo):
   - `GOOGLE_GENERATIVE_AI_API_KEY` - [Google AI Studio](https://aistudio.google.com)
   - `AWS_BEARER_TOKEN_BEDROCK` - a **long-term** Bedrock API key (AWS console). Short-term keys expire in <=12h and will kill an overnight run mid-flight.
-  - `ANTHROPIC_API_KEY` - powers **boss** (Fable 5) and doubles as the Opus
-    rollback path. Must belong to an org with Claude Fable 5 access. The
-    pipeline minus boss runs fine without it.
+  - `ANTHROPIC_API_KEY` - powers **boss** (Opus 5.5) and doubles as the Opus
+    rollback path. The pipeline minus boss runs fine without it.
   - `OPENAI_API_KEY` - powers **astra** (GPT-6 Astra). Must belong to an org
     with GPT-6 Astra access. The pipeline minus astra runs fine without it.
   - `FIRECRAWL_API_KEY` *(optional)* - powers the agents' web search via MCP; without it, remove the `mcp.firecrawl` block from `config/kilo.jsonc`
@@ -140,7 +139,7 @@ kilo --agent quick        # or Tab to `quick` inside the TUI
 # escalate a stuck task by hand
 #   "escalate this to @opus-coder"
 
-# the hardest tasks, worth the biggest model (Fable 5 @ max reasoning)
+# the hardest tasks, worth the biggest model (Opus 5.5 @ max reasoning)
 kilo --agent boss         # or name @boss in a request - never auto-routed
 
 # same contract on OpenAI's top reasoning model (GPT-6 Astra @ high)
