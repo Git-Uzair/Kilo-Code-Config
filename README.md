@@ -105,10 +105,10 @@ cd kilo-config && ./install.sh
 ```
 
 The installer backs up any existing `~/.config/kilo` and `~/.kilo` before
-touching them, installs the CLI, copies this config, clones the skill
-repositories, installs the curated skill set plus the local skills in
-`skills/`, installs `kopipasta` (via `uv` or `pip`, best effort), and prints
-the env-var commands for your keys. Then verify:
+touching them, installs the CLI, copies this config, mirrors `skills/`
+into `~/.kilo/skills` (removing any skill this repo no longer ships),
+installs `kopipasta` (via `uv` or `pip`, best effort), and prints the
+env-var commands for your keys. Then verify:
 
 ```powershell
 kilo agent list   # expect: conductor, quick, worker, planner, coder,
@@ -144,14 +144,22 @@ kilo --agent boss         # or name @boss in a request - never auto-routed
 
 # same contract on OpenAI's top reasoning model (GPT-6 Astra @ high)
 kilo --agent astra        # or name @astra in a request - never auto-routed
+
+# sharpen a design by interview first (attended agents only)
+#   /grill-with-docs   in @quick (cheap) or @boss / @astra (deep)
+
+# after a run: what should change in the harness itself?
+#   /retro
+
+# terse replies until "stop caveman"
+#   /caveman           (/ultracave or /megacave compress harder)
 ```
 
 Plans land in `docs/plans/<date>-<slug>.md` inside the target repo and double
 as the run's progress ledger - task statuses, failed-cycle counts, and attempt
 history are updated there as the run proceeds, so runs survive restarts.
 
-Update skills later with: `~/.kilo/update-skills.ps1` (Windows) or re-run
-`./install.sh` (Unix).
+Skills update with the repo: `git pull`, then re-run the installer.
 
 `kopipasta` is optional but assumed by the `codebase-map` skill: without it
 agents fall back to plain reads. Needs Python 3.10+; install by hand with
@@ -284,30 +292,48 @@ lines are inert on 7.7.1 and retained only for older installs:
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
 config/agents/*.md         the ten agents (system prompt + permissions each)
-scripts/update-skills.ps1  pulls skill repos, re-copies the curated set
-skills/codebase-map/       local skill: free AST repo map via kopipasta
+skills/                    every skill the harness loads (vendored + local codebase-map)
+skills/vendor.psd1         upstream repo, pinned commit, license files per vendored skill
+scripts/sync-skills.ps1    re-vendors skills from vendor.psd1, checks dependency closure
 install.ps1 / install.sh   one-shot setup
 ```
 
 ## Skills
 
-Installed at setup by cloning upstream (not redistributed here):
-[obra/superpowers](https://github.com/obra/superpowers) (MIT) - 9 skills
-including test-driven-development, systematic-debugging,
-verification-before-completion ·
-[DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) (MIT) -
-minimal-code posture + review ·
-[anthropics/skills](https://github.com/anthropics/skills) (Apache-2.0) -
-skill-creator, webapp-testing, frontend-design.
+Every skill the harness loads ships in `skills/`. The installers mirror
+that folder into `~/.kilo/skills` and remove anything else there (the
+pre-install backup keeps it), so to keep a skill of your own, add it to
+`skills/`. Third-party skills are vendored byte-for-byte at the commits
+pinned in `skills/vendor.psd1`, each folder with its upstream license:
 
-Plus one local skill shipped in this repo (MIT, same as the config):
-`codebase-map` - map a repository's symbols with
-[kopipasta](https://github.com/mkorpela/kopipasta) before reading files, so
-exploration costs one command instead of a fan-out of reads. Installed to
-`~/.kilo/skills/codebase-map/` and mirrored to `~/.kilo/local-skills/` so
-`update-skills.ps1` can refresh it.
+- [mattpocock/skills](https://github.com/mattpocock/skills) (MIT) -
+  `tdd`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`,
+  `grilling`, `grill-with-docs`, `retro`, `writing-for-agents`
+- [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman)
+  (Apache-2.0, NOTICE included) - `caveman`, `ultracave`, `megacave`;
+  the skill folders only, not the Caveman CLI, proxy, or gateway
+- [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail)
+  (MIT) - `ponytail`, `ponytail-review`
+- [anthropics/skills](https://github.com/anthropics/skills)
+  (Apache-2.0) - `frontend-design`
+
+Plus one local skill (MIT, same as the config): `codebase-map` - map a
+repository's symbols with
+[kopipasta](https://github.com/mkorpela/kopipasta) before reading files,
+so exploration costs one command instead of a fan-out of reads.
+
+Every skill a shipped skill depends on ships too, and
+`scripts/sync-skills.ps1` re-checks that on every sync. Kilo ignores the
+upstream `disable-model-invocation` flag, so the interview skills
+(`grilling`, `grill-with-docs`) are gated by permission instead: only
+@quick, @boss, and @astra can load them.
+
+Refreshing vendored skills (maintainers): run
+`./scripts/sync-skills.ps1 -Latest`, review `git diff -- skills`, paste
+the printed commits into `skills/vendor.psd1`, and commit.
 
 ## License
 
-MIT - see [LICENSE](LICENSE). The skill collections above remain under their
-own licenses and are fetched from their upstream repositories at install time.
+MIT - see [LICENSE](LICENSE). Vendored skills under `skills/` keep their
+upstream licenses (MIT or Apache-2.0); each vendored folder carries its
+license file(s).

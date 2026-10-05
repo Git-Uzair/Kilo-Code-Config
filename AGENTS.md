@@ -5,9 +5,13 @@ do not re-derive.
 
 - This repo is prose and configuration: the Kilo CLI global config
   (`config/kilo.jsonc`), standing instructions (`config/instructions.md`),
-  agent prompts (`config/agents/*.md`), installers, and one local skill
-  (`skills/codebase-map/`). Nothing here executes at runtime except the
-  installers.
+  agent prompts (`config/agents/*.md`), installers, and every skill the
+  harness loads (`skills/`). Nothing here executes at runtime except the
+  installers and the maintainer-run `scripts/sync-skills.ps1`.
+- `skills/` holds vendored third-party skills (byte copies at the
+  commits pinned in `skills/vendor.psd1`) plus the local `codebase-map`.
+  Never hand-edit a vendored folder - the next sync overwrites it; adapt
+  the harness around a skill in `config/` instead.
 - There is NO test suite, NO build, and NO lint command - and none should
   ever be bootstrapped. Changes here are verified by reading the diff
   against the request. The DIRECT lane with @verifier-lite is the right
