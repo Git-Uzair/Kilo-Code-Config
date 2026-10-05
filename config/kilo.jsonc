@@ -71,8 +71,9 @@
   "formatter": true,
   "lsp": true,
 
-  // Skills load from ~/.kilo/skills (default path) - a curated pool of 14.
-  // Update via ~/.kilo/update-skills.ps1 (pulls repos, re-copies curated set).
+  // Skills: ~/.kilo/skills mirrors skills/ in this repo (the installers
+  // copy it; pins and licenses in skills/vendor.psd1). Interview skills
+  // are gated in permission.skill below.
 
   // Pin the built-in subagents and title/summary jobs to the cheap model.
   // Compaction on Flash (2026-09-15): worker sessions are long-lived by
@@ -146,6 +147,13 @@
     "*": "allow",
     "task": { "*": "allow" },
     "doom_loop": "deny",
+
+    // Interview skills ask the user and wait on decisions, so only the
+    // attended primaries (quick, boss, astra) re-allow them in their own
+    // frontmatter. Kilo ignores the upstream disable-model-invocation flag
+    // (absent from the 7.8.3 binary); a denied skill is withheld from
+    // <available_skills>, so permission is the only gate.
+    "skill": { "*": "allow", "grilling": "deny", "grill-with-docs": "deny" },
 
     // Firecrawl registers ~25 tools; denied ones are withheld from the
     // model, saving their schema tokens on every request.
@@ -230,7 +238,6 @@
     "external_directory": {
       "*": "deny",
       "~/.kilo/skills/**": "allow",
-      "~/.kilo/skill-repos/**": "allow",
       "~/AppData/Local/Temp/kilo/**": "allow"
     }
   }

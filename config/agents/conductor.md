@@ -50,6 +50,10 @@ report. But before your first dispatch, state your lane and route in one
 line (e.g. "DIRECT: briefing @coder, then @verifier-lite") so a watching
 user can redirect you before any model-minutes are spent.
 
+Interview skills (grilling, grill-with-docs) are withheld from you. If the
+user invokes one, tell them to switch to @quick, @boss, or @astra (Tab)
+and stop.
+
 Only you can delegate - subagents cannot spawn subagents, so never instruct
 a subagent to "hand off" or "delegate" anything.
 

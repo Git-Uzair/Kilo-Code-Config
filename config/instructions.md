@@ -9,6 +9,9 @@ When a task is ambiguous, pick the most defensible interpretation, state the
 assumption, proceed, and flag it in your final report. Where a skill expects
 a human checkpoint (plan approval, review sign-off), the conductor plays
 the human's role and the verifier's verdict replaces sign-off.
+The one exception is an interview the user starts in @quick, @boss, or
+@astra (grilling, grill-with-docs): there, asking is the job - one round
+per turn.
 
 ## The pipeline
 
@@ -75,18 +78,17 @@ Check for a relevant skill before starting. Say which skill you are using.
 | Exploring a repo, locating a symbol, sizing a change | codebase-map |
 | Writing ANY code - default posture, laziest working solution | ponytail |
 | Reviewing a change for over-engineering | ponytail-review |
-| PIPELINE-lane work needing a designed, multi-step plan | writing-plans |
-| Executing an approved written plan | executing-plans |
-| Orchestrating a task through subagents end to end | subagent-driven-development |
-| Several independent subtasks that could run at once | dispatching-parallel-agents |
-| Writing or changing behaviour | test-driven-development |
-| Something is broken and the cause is not obvious | systematic-debugging |
-| About to claim a task is done | verification-before-completion |
-| Handing work to review | requesting-code-review |
-| Responding to review findings | receiving-code-review |
+| Writing or changing behaviour | tdd |
+| Shaping a module's interface or seam | codebase-design |
+| Something is broken and the cause is not obvious | diagnosing-bugs |
+| Writing or editing a skill, AGENTS.md, or an agent prompt | writing-for-agents |
+| Naming domain terms, GLOSSARY.md, or an ADR | domain-modeling |
 | Building UI | frontend-design |
-| Testing a web app end to end in a browser | webapp-testing |
-| Writing a new skill | skill-creator |
+
+`/grill-with-docs`, `/retro`, and `/caveman` (with `/ultracave`,
+`/megacave`) run when the user types them. Caveman shapes replies to the
+user only: briefs, receipts, FACTS blocks, VERDICT lines, and files stay
+in plain prose and exact format.
 
 ## Evidence, not memory
 

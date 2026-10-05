@@ -9,10 +9,13 @@ temperature: 0.1
 # contract is no plan files, and a completed plan_exit parks the session on
 # Kilo's implement-or-refine follow-up (the wedge that hit the planner on
 # 2026-08-12/21). question stays allowed - quick is attended by definition.
+# skill: allow re-opens the interview skills (grilling, grill-with-docs)
+# that kilo.jsonc denies globally - quick is attended.
 permission:
   suggest: deny
   plan_enter: deny
   plan_exit: deny
+  skill: allow
   task:
     "*": deny
 ---

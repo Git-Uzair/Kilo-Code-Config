@@ -27,10 +27,14 @@ variant: high
 # dispatches astra, the conductor's own question deny cascades over it.
 # task: cheap read fan-out only - astra does its own thinking, Flash runs
 # its errands. The pipeline agents stay the conductor's to dispatch.
+# skill: allow re-opens the interview skills (grilling, grill-with-docs)
+# that kilo.jsonc denies globally; when the conductor dispatches this
+# agent, the conductor's deny cascades over it, as with question.
 permission:
   suggest: deny
   plan_enter: deny
   plan_exit: deny
+  skill: allow
   task:
     "*": deny
     explore: allow
