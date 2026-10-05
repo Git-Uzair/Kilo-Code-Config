@@ -19,7 +19,7 @@ PKG="@kilocode/cli@${PIN}"
 [ "${1:-}" = "--latest" ] && PKG="@kilocode/cli@latest"
 
 echo "== Kilo multi-agent pipeline installer =="
-for tool in git node npm; do
+for tool in node npm; do
   command -v "$tool" >/dev/null || { echo "ERROR: $tool required but not on PATH"; exit 1; }
 done
 
@@ -38,51 +38,32 @@ done
 echo "Installing $PKG ..."
 npm install -g "$PKG"
 echo "kilo version: $(kilo --version)"
-mkdir -p "$CFG/agents" "$KILO/skill-repos" "$KILO/skills"
+mkdir -p "$CFG/agents" "$KILO/skills"
 cp "$REPO_ROOT/config/kilo.jsonc" "$CFG/"
 cp "$REPO_ROOT/config/instructions.md" "$CFG/"
 cp "$REPO_ROOT"/config/agents/*.md "$CFG/agents/"
 echo "Config installed to $CFG"
 
-clone_or_pull() {
-  local name="$1" url="$2" dest="$KILO/skill-repos/$1"
-  if [ -d "$dest/.git" ]; then git -C "$dest" pull --ff-only
-  else git clone --depth 1 "$url" "$dest"; fi
-}
-clone_or_pull superpowers      https://github.com/obra/superpowers
-clone_or_pull ponytail         https://github.com/DietrichGebert/ponytail
-clone_or_pull anthropic-skills https://github.com/anthropics/skills
-
-# curated skill set (mirror of scripts/update-skills.ps1)
-copy_skills() {
-  local repo="$1"; shift
-  for s in "$@"; do
-    src="$KILO/skill-repos/$repo/skills/$s"
-    [ -f "$src/SKILL.md" ] || { echo "WARN: missing upstream skill $repo/$s"; continue; }
-    rm -rf "$KILO/skills/$s"
-    cp -r "$src" "$KILO/skills/$s"
-    echo "  -> $s"
-  done
-}
-copy_skills superpowers test-driven-development systematic-debugging \
-  verification-before-completion writing-plans executing-plans \
-  subagent-driven-development dispatching-parallel-agents \
-  requesting-code-review receiving-code-review
-copy_skills ponytail ponytail ponytail-review
-copy_skills anthropic-skills frontend-design skill-creator webapp-testing
-
-# local skills shipped in this repo; mirrored so update-skills.ps1 can
-# refresh them later without knowing where this repo was cloned
-if [ -d "$REPO_ROOT/skills" ]; then
-  for s in "$REPO_ROOT"/skills/*/; do
-    [ -f "$s/SKILL.md" ] || continue
-    name="$(basename "$s")"
-    mkdir -p "$KILO/skills/$name" "$KILO/local-skills/$name"
-    cp -r "$s". "$KILO/skills/$name/"
-    cp -r "$s". "$KILO/local-skills/$name/"
-    echo "  -> $name (local)"
-  done
-fi
+# skills: ~/.kilo/skills mirrors skills/ in this repo (see install.ps1 step 5)
+POOL="$KILO/skills"
+for d in "$POOL"/*/; do
+  [ -d "$d" ] || continue
+  name="$(basename "$d")"
+  if [ ! -f "$REPO_ROOT/skills/$name/SKILL.md" ]; then
+    rm -rf "${d%/}"
+    echo "  removed $name (not shipped by this repo)"
+  fi
+done
+for s in "$REPO_ROOT"/skills/*/; do
+  [ -f "$s/SKILL.md" ] || continue
+  name="$(basename "$s")"
+  rm -rf "$POOL/$name"
+  mkdir -p "$POOL/$name"
+  cp -r "$s". "$POOL/$name/"
+  echo "  -> $name"
+done
+# leftovers of the clone-based installer (before 2026-10-05)
+rm -rf "$KILO/update-skills.ps1" "$KILO/local-skills" "$KILO/skill-repos"
 
 # kopipasta - the context oracle behind the codebase-map skill (best effort)
 if command -v uv >/dev/null 2>&1; then

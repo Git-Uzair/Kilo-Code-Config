@@ -21,7 +21,7 @@ $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 Write-Host "== Kilo multi-agent pipeline installer ==" -ForegroundColor Cyan
 
 # 1. Prerequisites
-foreach ($tool in @('git', 'node', 'npm')) {
+foreach ($tool in @('node', 'npm')) {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
         throw "$tool is required but not on PATH. Install it and re-run."
     }
@@ -54,44 +54,36 @@ Copy-Item (Join-Path $repoRoot 'config\instructions.md') $cfgDir -Force
 Copy-Item (Join-Path $repoRoot 'config\agents\*.md') (Join-Path $cfgDir 'agents') -Force
 Write-Host "Config installed to $cfgDir"
 
-# 5. Skill repositories + curated skill set
-$repos = Join-Path $kiloDir 'skill-repos'
-New-Item -ItemType Directory -Force $repos, (Join-Path $kiloDir 'skills') | Out-Null
-$sources = @{
-    'superpowers'      = 'https://github.com/obra/superpowers'
-    'ponytail'         = 'https://github.com/DietrichGebert/ponytail'
-    'anthropic-skills' = 'https://github.com/anthropics/skills'
-}
-foreach ($name in $sources.Keys) {
-    $dest = Join-Path $repos $name
-    if (Test-Path (Join-Path $dest '.git')) {
-        Write-Host "Repo exists, pulling: $name"
-        git -C $dest pull --ff-only
-    }
-    else {
-        Write-Host "Cloning $name ..."
-        git clone --depth 1 $sources[$name] $dest
-    }
-    if ($LASTEXITCODE -ne 0) { throw "git failed for $name (exit $LASTEXITCODE)" }
-}
-
-# Local skills shipped in this repo (skills/<name>/SKILL.md). Mirrored to
-# ~/.kilo/local-skills so the standalone update-skills.ps1 can refresh them
-# later without knowing where this repo was cloned.
-$localSrc = Join-Path $repoRoot 'skills'
-$localMirror = Join-Path $kiloDir 'local-skills'
-if (Test-Path $localSrc) {
-    foreach ($skill in Get-ChildItem $localSrc -Directory) {
-        foreach ($dest in @((Join-Path $localMirror $skill.Name), (Join-Path (Join-Path $kiloDir 'skills') $skill.Name))) {
-            New-Item -ItemType Directory -Force $dest | Out-Null
-            Copy-Item (Join-Path $skill.FullName '*') $dest -Recurse -Force
-        }
-        Write-Host "  -> $($skill.Name) (local)"
+# 5. Skills: ~/.kilo/skills mirrors skills/ in this repo. Every shipped
+# skill is copied fresh; anything else in the pool is removed (the backup
+# above keeps it). To keep a skill of your own, add it to skills/ here.
+$pool = Join-Path $kiloDir 'skills'
+New-Item -ItemType Directory -Force $pool | Out-Null
+$shipped = @(Get-ChildItem (Join-Path $repoRoot 'skills') -Directory |
+    Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') })
+foreach ($dir in Get-ChildItem $pool -Directory) {
+    if ($shipped.Name -notcontains $dir.Name) {
+        Remove-Item $dir.FullName -Recurse -Force
+        Write-Host "  removed $($dir.Name) (not shipped by this repo)"
     }
 }
-
-Copy-Item (Join-Path $repoRoot 'scripts\update-skills.ps1') $kiloDir -Force
-& (Join-Path $kiloDir 'update-skills.ps1')
+foreach ($skill in $shipped) {
+    $dest = Join-Path $pool $skill.Name
+    # Remove first: Copy-Item onto an existing folder nests the source
+    # inside it (skills/<name>/<name>/SKILL.md), and stale files survive.
+    if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+    Copy-Item $skill.FullName $dest -Recurse
+    Write-Host "  -> $($skill.Name)"
+}
+# Leftovers of the clone-based installer (before 2026-10-05): the old
+# update-skills.ps1 would re-install the retired skill sets if run.
+foreach ($old in @('update-skills.ps1', 'local-skills', 'skill-repos')) {
+    $p = Join-Path $kiloDir $old
+    if (Test-Path $p) {
+        Remove-Item $p -Recurse -Force
+        Write-Host "  removed ~/.kilo/$old"
+    }
+}
 
 # 6. kopipasta - the context oracle behind the codebase-map skill.
 # Best-effort: no Python toolchain must never fail a Kilo install.
