@@ -28,8 +28,10 @@ variant: high
 # task: cheap read fan-out only - astra does its own thinking, Flash runs
 # its errands. The pipeline agents stay the conductor's to dispatch.
 # skill: allow re-opens the interview skills (grilling, grill-with-docs)
-# that kilo.jsonc denies globally; when the conductor dispatches this
-# agent, the conductor's deny cascades over it, as with question.
+# that kilo.jsonc denies globally. Dispatched by the conductor, this agent
+# keeps that allow (the 7.8.3 task tool does not pass skill denies down),
+# but every subagent runs with question denied, so an interview cannot
+# reach the user there.
 permission:
   suggest: deny
   plan_enter: deny
