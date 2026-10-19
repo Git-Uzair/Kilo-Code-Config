@@ -25,6 +25,7 @@ No Kilo account or gateway required - you bring your own API keys.
 | **verifier-lite** | gemini-3.8-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
 | **boss** | claude-opus-5-5 @ max reasoning *(Anthropic)* | User-summoned solo heavyweight (`Tab` / `--agent boss` / naming `@boss`): coding, planning, verifying, debugging for tasks the user judges worth the biggest model. Never auto-routed. |
 | **astra** | gpt-6-astra @ high reasoning *(OpenAI)* | Second user-summoned heavyweight (`Tab` / `--agent astra` / naming `@astra`): same contract as boss on OpenAI's top reasoning model. Never auto-routed. |
+| **argon** | gemini-4-argon @ high reasoning *(Google)* | Third user-summoned heavyweight (`Tab` / `--agent argon` / naming `@argon`): same contract as boss on Google's top reasoning model. Never auto-routed. |
 
 Opus runs through **Amazon Bedrock** on the EU inference profile
 (`amazon-bedrock/eu.anthropic.claude-opus-5`), not the Anthropic API. Same
@@ -43,6 +44,10 @@ reasoning effort, the registry's middle setting of
 low/medium/high/xhigh/max). Added 2026-09-09 under the 7.5.16 pin and not
 yet live-verified end to end - the wiring mirrors boss, the scars are still
 boss's own.
+
+The `google` provider is live for **argon** (`google/gemini-4-argon` at high
+reasoning effort), sharing the `GOOGLE_GENERATIVE_AI_API_KEY` with the Flash
+agents. Live-verified on 2026-10-14.
 
 Flow is proportional to the request. Questions are answered (ANSWER lane).
 Changes that are already fully specified - renames, find-and-replace, config
@@ -112,7 +117,7 @@ env-var commands for your keys. Then verify:
 
 ```powershell
 kilo agent list   # expect: conductor, quick, worker, planner, coder,
-                  #         opus-coder, verifier, verifier-lite, boss, astra
+                  #         opus-coder, verifier, verifier-lite, boss, astra, argon
 ```
 
 ## Usage
@@ -128,7 +133,7 @@ kilo
 kilo --agent quick        # or Tab to `quick` inside the TUI
 
 # talk to a specialist directly
-#   @planner  @coder  @verifier  @opus-coder  @boss  @astra   (in the TUI message box)
+#   @planner  @coder  @verifier  @opus-coder  @boss  @astra  @argon   (in the TUI message box)
 
 # want the exhaustive Opus plan instead of the worker's lighter one?
 #   name it: "@planner plan this" - execution then goes to a fresh worker
@@ -145,8 +150,11 @@ kilo --agent boss         # or name @boss in a request - never auto-routed
 # same contract on OpenAI's top reasoning model (GPT-6 Astra @ high)
 kilo --agent astra        # or name @astra in a request - never auto-routed
 
+# same contract on Google's top reasoning model (Gemini 4 Argon @ high)
+kilo --agent argon        # or name @argon in a request - never auto-routed
+
 # sharpen a design by interview first (attended agents only)
-#   /grill-with-docs   in @quick (cheap) or @boss / @astra (deep)
+#   /grill-with-docs   in @quick (cheap) or @boss / @astra / @argon (deep)
 
 # after a run: what should change in the harness itself?
 #   /retro
@@ -291,7 +299,7 @@ lines are inert on 7.7.1 and retained only for older installs:
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the ten agents (system prompt + permissions each)
+config/agents/*.md         the eleven agents (system prompt + permissions each)
 skills/                    every skill the harness loads (vendored + local codebase-map)
 skills/vendor.psd1         upstream repo, pinned commit, license files per vendored skill
 scripts/sync-skills.ps1    re-vendors skills from vendor.psd1, checks dependency closure
@@ -326,7 +334,7 @@ Every skill a shipped skill depends on ships too, and
 `scripts/sync-skills.ps1` re-checks that on every sync. Kilo ignores the
 upstream `disable-model-invocation` flag, so the interview skills
 (`grilling`, `grill-with-docs`) are gated by permission instead: only
-@quick, @boss, and @astra can load them.
+@quick, @boss, @astra, and @argon can load them.
 
 Refreshing vendored skills (maintainers): run
 `./scripts/sync-skills.ps1 -Latest`, review `git diff -- skills`, paste

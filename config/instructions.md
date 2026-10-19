@@ -9,9 +9,9 @@ When a task is ambiguous, pick the most defensible interpretation, state the
 assumption, proceed, and flag it in your final report. Where a skill expects
 a human checkpoint (plan approval, review sign-off), the conductor plays
 the human's role and the verifier's verdict replaces sign-off.
-The one exception is an interview the user starts in @quick, @boss, or
-@astra (grilling, grill-with-docs): there, asking is the job - one round
-per turn.
+The one exception is an interview the user starts in @quick, @boss,
+@astra, or @argon (grilling, grill-with-docs): there, asking is the
+job - one round per turn.
 
 ## The pipeline
 
