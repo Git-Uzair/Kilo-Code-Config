@@ -39,6 +39,12 @@ do not re-derive.
   (or copy the changed file over manually when asked). The installers
   mirror `config/agents/` and `skills/`: a file deleted here disappears
   from the live config on the next install.
+- `~/.config/kilo/plugin/` belongs to herdr, not to this repo:
+  `herdr integration install kilo` writes `herdr-agent-state.js` there.
+  The installers must never mirror or clean that folder, or a reinstall
+  silently breaks herdr's Kilo state reporting and session resume.
+  `config/herdr/config.toml` is herdr's own config; the installers copy
+  it only when `herdr` is on PATH.
 - An agent's name is its filename in `config/agents/`. Renaming or
   removing one means updating, in the same change: `default_agent` in
   `config/kilo.jsonc` (a missing default agent aborts every run), the

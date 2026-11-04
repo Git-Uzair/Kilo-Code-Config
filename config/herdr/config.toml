@@ -1,0 +1,16 @@
+# Herdr TUI config - https://herdr.dev/tui/docs/config-reference/
+# install.ps1 / install.sh copy this file to %APPDATA%\herdr\config.toml
+# (Windows) or ~/.config/herdr/config.toml (macOS/Linux) when herdr is on
+# PATH, backing up any existing copy first. Edit it here, not there.
+
+[keys]
+# Herdr's default prefix, ctrl+b, is the Kilo TUI's key for backgrounding
+# running subagents (and cursor-left in its prompt). ctrl+q is bound
+# neither in Kilo 7.8.18 nor in PowerShell's PSReadLine. Avoid ctrl+a
+# (Kilo), ctrl+space and ctrl+s (PSReadLine).
+prefix = "ctrl+q"
+
+[ui.toast]
+# Herdr's default is "off". "system" raises an OS notification when a
+# background agent finishes or needs input.
+delivery = "system"

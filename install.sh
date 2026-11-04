@@ -82,6 +82,25 @@ else
   echo "WARN: neither uv nor pip3 found - skipping kopipasta. The codebase-map skill needs it: uv tool install kopipasta"
 fi
 
+# herdr TUI (optional) - wired only when already on PATH, never downloaded
+# here (see install.ps1 step 7)
+if command -v herdr >/dev/null 2>&1; then
+  HERDR_CFG="$HOME/.config/herdr/config.toml"
+  mkdir -p "$(dirname "$HERDR_CFG")"
+  if [ -f "$HERDR_CFG" ]; then
+    echo "Backing up $HERDR_CFG -> $HERDR_CFG.bak-$STAMP"
+    cp "$HERDR_CFG" "$HERDR_CFG.bak-$STAMP"
+  fi
+  cp "$REPO_ROOT/config/herdr/config.toml" "$HERDR_CFG"
+  echo "Herdr config installed to $HERDR_CFG"
+  echo "  (herdr already running? apply it with: herdr server reload-config)"
+  herdr integration install kilo || echo "WARN: herdr integration install kilo failed - retry it by hand"
+  herdr integration status || true
+else
+  echo "Herdr not found - skipped (optional). To add it, install it, then re-run this installer:"
+  echo "  curl -fsSL https://herdr.dev/install.sh | sh"
+fi
+
 echo ""
 echo "== Set your API keys (add to your shell profile) =="
 echo '  export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"'

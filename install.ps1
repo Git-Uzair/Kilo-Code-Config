@@ -117,7 +117,40 @@ else {
     Write-Warning "kopipasta not installed (needs uv or pip). The codebase-map skill falls back to plain reads until you run: uv tool install kopipasta"
 }
 
-# 7. API keys - never stored, never echoed
+# 7. Herdr TUI (optional, README "Herdr"). Wired only when herdr is already
+# on PATH - this installer never downloads it. The Kilo integration needs
+# ~/.config/kilo to exist (step 4) and writes
+# ~/.config/kilo/plugin/herdr-agent-state.js, which herdr owns: steps 4-5
+# leave plugin/ alone.
+if (Get-Command herdr -ErrorAction SilentlyContinue) {
+    $herdrDir = Join-Path $env:APPDATA 'herdr'
+    $herdrCfg = Join-Path $herdrDir 'config.toml'
+    if (Test-Path $herdrCfg) {
+        Write-Host "Backing up $herdrCfg -> $herdrCfg.bak-$stamp"
+        Copy-Item $herdrCfg "$herdrCfg.bak-$stamp" -Force
+    }
+    New-Item -ItemType Directory -Force $herdrDir | Out-Null
+    Copy-Item (Join-Path $repoRoot 'config\herdr\config.toml') $herdrCfg -Force
+    Write-Host "Herdr config installed to $herdrCfg"
+    Write-Host "  (herdr already running? apply it with: herdr server reload-config)"
+    herdr integration install kilo
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "herdr integration install kilo failed (exit $LASTEXITCODE). Until it is installed, herdr reads Kilo's state from the screen and cannot resume Kilo sessions after a restart. Retry by hand."
+    }
+    elseif (-not (Test-Path (Join-Path $cfgDir 'plugin\herdr-agent-state.js'))) {
+        # herdr 0.9.5 puts the plugin under %HOME%\.config\kilo when HOME is
+        # set, else under %USERPROFILE% (src/integration/env.rs); $cfgDir
+        # is under PowerShell's $HOME, the user profile.
+        Write-Warning "herdr installed its Kilo plugin outside $cfgDir (HOME='$env:HOME'), so Kilo will not load it. Clear HOME or point it at your user profile, then re-run."
+    }
+    herdr integration status
+}
+else {
+    Write-Host "Herdr not found - skipped (optional). To add it, install it, then re-run this installer in a new terminal:"
+    Write-Host '  powershell -ExecutionPolicy Bypass -c "irm https://herdr.dev/install.ps1 | iex"'
+}
+
+# 8. API keys - never stored, never echoed
 Write-Host ""
 Write-Host "== Set your API keys (user scope, new terminals pick them up) ==" -ForegroundColor Yellow
 Write-Host '  [Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")'
@@ -132,7 +165,7 @@ Write-Host "  Already have a kilo TUI open? Restart it." -ForegroundColor Yellow
 Write-Host "  A running process keeps the environment it started with and will not"
 Write-Host "  see keys you set just now."
 
-# 8. Verify
+# 9. Verify
 Write-Host ""
 Write-Host "== Agent roster ==" -ForegroundColor Cyan
 # No 2>&1 here: kilo reports first-run DB migration progress on stderr, and in

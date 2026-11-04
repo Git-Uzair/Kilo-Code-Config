@@ -90,7 +90,9 @@ The installer:
    into `~/.kilo/skills`, removing any agent or skill this repo no longer
    ships (the backup keeps them);
 4. installs `kopipasta` (via `uv` or `pip`, best effort);
-5. prints the environment-variable commands for your keys.
+5. if `herdr` is on PATH, installs its config and Kilo plugin (see
+   [Herdr](#herdr-one-place-for-many-sessions));
+6. prints the environment-variable commands for your keys.
 
 Then verify:
 
@@ -137,6 +139,82 @@ it, agents fall back to plain reads. It needs Python 3.10+. Install it by
 hand with `uv tool install kopipasta` (or `pip install kopipasta`) and
 check it with `kopipasta map --help`. The standard invocation is
 `kopipasta map --json`.
+
+## Herdr: one place for many sessions
+
+[Herdr TUI](https://herdr.dev/tui/docs/) (Apache-2.0; v0.9.5 when this
+was written) is optional: a terminal workspace manager for coding agents.
+
+- Its server owns the panes, so closing the window leaves every agent
+  running.
+- A sidebar shows which agents are working, which are blocked waiting for
+  you, and which have finished.
+- After a reboot it restores the layout and reopens each Kilo
+  conversation with `kilo --session <id>`. Kilo reopens a conversation in
+  the agent it last used, so a boss pane normally returns as boss.
+
+**Install.**
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://herdr.dev/install.ps1 | iex"
+```
+
+On macOS/Linux use `curl -fsSL https://herdr.dev/install.sh | sh`. Then
+re-run `./install.ps1` (or `./install.sh`) in a new terminal. With herdr
+on PATH, the installer:
+
+1. copies `config/herdr/config.toml` to `%APPDATA%\herdr\config.toml`
+   (`~/.config/herdr/config.toml` on macOS/Linux), backing up any
+   existing file;
+2. runs `herdr integration install kilo`, which adds
+   `~/.config/kilo/plugin/herdr-agent-state.js`;
+3. prints `herdr integration status`.
+
+The plugin reports Kilo's state to herdr and does nothing outside a
+herdr pane. On Windows the herdr binary is unsigned, so SmartScreen may
+warn on first run.
+
+**Keys.** The prefix is ctrl+q, not herdr's default ctrl+b: in the Kilo
+TUI ctrl+b sends running subagents to the background.
+
+| Key | Action |
+|---|---|
+| `ctrl+q c` | new tab |
+| `ctrl+q v` / `ctrl+q -` | split right / down |
+| `ctrl+q h`/`j`/`k`/`l` | move between panes |
+| `ctrl+q w` | workspaces |
+| `ctrl+q q` | detach, leaving everything running (`herdr` reattaches) |
+| `ctrl+q ?` | help |
+
+**Working with it.**
+
+- One workspace per repo and one tab per task. In a pane, run `kilo`
+  (quick) or `kilo --agent boss` / `kilo --agent argon`.
+- Start a new conversation in a new tab, not with `/new` inside a running
+  Kilo pane: herdr tracks the first session a pane reports and resumes
+  that one.
+- Keep one writer per checkout, and never open the same session in two
+  panes. On Kilo 7.8.18 a second process can delete a reply the first is
+  still writing, and a scheduled wakeup can fire twice. Both are fixed in
+  7.8.23, which has not yet reached Kilo's `latest` channel.
+- Parallel work in one repo goes into a worktree. From the repo, run
+  `herdr worktree create --cwd . --branch <name>`. The checkout opens as
+  its own workspace under `~/.herdr/worktrees/<repo>/<branch-slug>`.
+  Remove it with `herdr worktree remove --workspace <id>` (ids come from
+  `herdr workspace list`); this deletes the checkout and keeps the
+  branch.
+- Panes are started by the herdr server, so an API key set after the
+  server started may not reach new panes. Run `herdr server stop`, then
+  `herdr`: the layout returns and Kilo conversations resume.
+- Every pane running boss is a separate Opus session, and they bill in
+  parallel.
+
+**Not used here.**
+
+- herdr's agent skill: its distinctive feature is agents starting other
+  agents in panes, which brings back parallel writers.
+- The Herdr desktop app: a separate product whose agents are not shared
+  with the TUI.
 
 ## Design notes
 
@@ -235,6 +313,7 @@ the underlying bug.
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
 config/agents/*.md         the four agents (system prompt + permissions each)
+config/herdr/config.toml   Herdr TUI config (optional; installed when herdr is on PATH)
 skills/                    every skill the harness loads (vendored + local codebase-map)
 skills/vendor.psd1         upstream repo, pinned commit, license files per vendored skill
 scripts/sync-skills.ps1    re-vendors skills from vendor.psd1, checks dependency closure
