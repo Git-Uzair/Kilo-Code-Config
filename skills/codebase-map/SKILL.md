@@ -223,7 +223,8 @@ usage error, run `kopipasta ask --help` and use whichever your build shows.
 - `kopipasta apply` is **not** part of this skill. Kilo's `edit`/`write`
   tools own file mutation; a second patcher is a second way to corrupt a
   file.
-- In a read-only role (verifier), `map` is allowed - it writes nothing and
-  calls nothing. `ask` is not: it writes `.kopipasta/` into the tree.
+- In a read-only role (a reviewer, the explore subagent), `map` is
+  allowed - it writes nothing and calls nothing. `ask` is not: it writes
+  `.kopipasta/` into the tree.
 - The map is a hypothesis generator. Evidence is still a file you read or a
   command you ran.

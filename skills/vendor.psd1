@@ -7,7 +7,7 @@
     Sources      = @(
         @{
             Repo         = 'https://github.com/mattpocock/skills'
-            Commit       = 'e47c149e9489bccd6acb41a1fb420ed68a5067e1'
+            Commit       = '4ae2317ddb22b046e26455e4f9c9b3aaaf62212d'
             LicenseFiles = @('LICENSE')                        # MIT
             Skills       = @{
                 'tdd'                = 'skills/engineering/tdd'                 # replaces superpowers test-driven-development
@@ -22,17 +22,17 @@
         },
         @{
             Repo         = 'https://github.com/JuliusBrussee/caveman'
-            Commit       = '6571943370f7c9d4de1946481177ee7b306cd8e8'
+            Commit       = '2e068f735253cce28256744804785f01887d9646'
             LicenseFiles = @('LICENSE', 'NOTICE', 'LICENSE-MIT') # Apache-2.0; NOTICE and the pre-3.0 MIT text must travel
             Skills       = @{
-                'caveman'   = 'skills/caveman'   # terse voice; ponytail says "pair with Caveman"
+                'caveman'   = 'skills/caveman'   # terse reply voice, user-typed /caveman
                 'ultracave' = 'skills/ultracave' # hard dependency of caveman (/caveman ultra)
                 'megacave'  = 'skills/megacave'  # hard dependency of caveman (/caveman wenyan)
             }
         },
         @{
             Repo         = 'https://github.com/DietrichGebert/ponytail'
-            Commit       = 'e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156'
+            Commit       = '96608e078b2d5ea607c5c3b8b5a54d1c1fba6846'
             LicenseFiles = @('LICENSE')                        # MIT
             Skills       = @{
                 'ponytail'        = 'skills/ponytail'
@@ -41,7 +41,7 @@
         },
         @{
             Repo         = 'https://github.com/anthropics/skills'
-            Commit       = '33375500bcea98d610eb30ce10ac4e59b89c390d'
+            Commit       = 'ca45fc496a3436251f191354091d557da31c15b5'
             LicenseFiles = @()                                 # Apache-2.0 LICENSE.txt ships inside the folder
             Skills       = @{
                 'frontend-design' = 'skills/frontend-design'
@@ -52,7 +52,7 @@
     # References the closure check accepts without shipping the target.
     # Every entry needs its reason.
     Acknowledged = @{
-        'tdd'          = @('code-review')      # "see the code-review skill" about refactoring; the review stage here is @verifier / @verifier-lite
+        'tdd'          = @('code-review')      # "see the code-review skill" about refactoring; review here is the ponytail-review skill
         'caveman'      = @('caveman-compress') # named only as an exemption from the voice rules
         'ultracave'    = @('caveman-compress') # same exemption clause
         'megacave'     = @('caveman-compress') # same exemption clause
