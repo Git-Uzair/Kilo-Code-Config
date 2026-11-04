@@ -8,8 +8,8 @@ A global configuration for the [Kilo Code CLI](https://kilo.ai) with:
 - an allow/deny permission envelope.
 
 You bring your own API keys; no Kilo account or gateway is required.
-Built on Windows 11 and pinned to Kilo CLI 7.8.18 (2026-11-04). The
-config itself is OS-agnostic.
+Pinned to Kilo CLI 7.8.18 and last verified on Windows 10 22H2
+(2026-11-04). The config itself is OS-agnostic.
 
 ## Agents
 
@@ -53,8 +53,14 @@ and publishing.
 
 ## Requirements
 
-- Node.js 20+ and git on PATH.
-- Windows: PowerShell (7 recommended, 5.1 works). macOS/Linux: bash.
+- Node.js 22+ (the Firecrawl MCP server requires it) and git on PATH.
+- Windows: PowerShell 7 (recommended). Windows PowerShell 5.1 also
+  works, but its default execution policy on Windows clients
+  (Restricted) blocks scripts, so start the installer there with
+  `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
+  macOS/Linux: bash.
+- Google Chrome, for the browser tools: the Playwright MCP server drives
+  it. The installer warns when it is missing.
 - API keys, set as user-scope environment variables (never stored in this
   repo):
   - `GOOGLE_GENERATIVE_AI_API_KEY`, from
@@ -67,13 +73,33 @@ and publishing.
     `config/kilo.jsonc`.
   - `GEMINI_API_KEY` *(optional)* - only for `kopipasta ask`.
 
+Set the keys before or after installing (the installer prints these
+commands too):
+
+```powershell
+# Windows (user scope)
+[Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")
+[Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<anthropic-key-for-boss>","User")
+[Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY","<optional-firecrawl-key>","User")
+```
+
+```bash
+# macOS / Linux (add to your shell profile)
+export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"
+export ANTHROPIC_API_KEY="<anthropic-key-for-boss>"
+export FIRECRAWL_API_KEY="<optional-firecrawl-key>"
+```
+
+Then open a new terminal before starting `kilo`: a process that is
+already running keeps the environment it started with.
+
 ## Install
 
 ```powershell
 # Windows
 git clone https://github.com/Git-Uzair/Kilo-Code-Config.git kilo-config
 cd kilo-config
-./install.ps1            # pins @kilocode/cli@7.8.18; -Latest for newest
+./install.ps1            # pinned versions; -Latest for newest
 ```
 
 ```bash
@@ -84,20 +110,27 @@ cd kilo-config && ./install.sh   # --latest for newest
 
 The installer:
 
-1. backs up any existing `~/.config/kilo` and `~/.kilo`;
-2. installs the CLI and copies this config;
-3. mirrors `config/agents/` into `~/.config/kilo/agents` and `skills/`
-   into `~/.kilo/skills`, removing any agent or skill this repo no longer
-   ships (the backup keeps them);
+1. checks for Node.js 22+ and backs up any existing `~/.config/kilo`
+   and `~/.kilo`;
+2. installs, globally via npm and at pinned versions, the Kilo CLI
+   (`@kilocode/cli@7.8.18`) and the two MCP servers the config launches
+   (`firecrawl-mcp@3.36.1`, `@playwright/mcp@0.0.84`), then checks for
+   Google Chrome;
+3. copies this config, mirroring `config/agents/` into
+   `~/.config/kilo/agents` and `skills/` into `~/.kilo/skills`, and
+   removing any agent or skill this repo no longer ships (the backup
+   keeps them);
 4. installs `kopipasta` (via `uv` or `pip`, best effort);
 5. if `herdr` is on PATH, installs its config and Kilo plugin (see
    [Herdr](#herdr-one-place-for-many-sessions));
-6. prints the environment-variable commands for your keys.
+6. prints the environment-variable commands for your keys;
+7. lists the installed agents and the status of both MCP servers.
 
-Then verify:
+Then verify, in a new terminal:
 
 ```powershell
 kilo agent list   # expect quick, boss, argon, gemini-coder (plus Kilo's built-ins)
+kilo mcp list     # expect firecrawl and playwright: connected
 ```
 
 ## Usage
@@ -203,6 +236,10 @@ TUI ctrl+b sends running subagents to the background.
   Remove it with `herdr worktree remove --workspace <id>` (ids come from
   `herdr workspace list`); this deletes the checkout and keeps the
   branch.
+- Kilo sessions in the same checkout share one Playwright browser
+  profile, and only one of them can have the browser open at a time; the
+  second gets "Browser is already in use". A worktree is a different
+  directory, so it gets its own profile.
 - Panes are started by the herdr server, so an API key set after the
   server started may not reach new panes. Run `herdr server stop`, then
   `herdr`: the layout returns and Kilo conversations resume.
@@ -289,6 +326,13 @@ the underlying bug.
   - The fix is the pinned `baseURL: "https://api.anthropic.com/v1"` (the
     SDK appends `/messages`). It is harmless on versions that build the
     URL correctly. Not re-verified on 7.8.18.
+- **The MCP servers are installed, not fetched per session.** The
+  installers put `firecrawl-mcp` and `@playwright/mcp` on PATH at pinned
+  versions. `kilo.jsonc` launches `firecrawl-mcp` and
+  `playwright-mcp --browser chrome` by name, where it used to run
+  `npx -y ...` (with Playwright at `@latest`) as each session started.
+  Verified on 7.8.18: `kilo mcp list` shows both connected when the
+  binaries are on PATH and both failed when they are not.
 - **`web_search: true` is not provider-native.** `websearch` routes to
   Parallel through Kilo's built-in mcp-parallel transport, independent of
   the model provider. It needs neither a Kilo account nor a search API

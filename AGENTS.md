@@ -45,6 +45,11 @@ do not re-derive.
   silently breaks herdr's Kilo state reporting and session resume.
   `config/herdr/config.toml` is herdr's own config; the installers copy
   it only when `herdr` is on PATH.
+- The MCP servers in `config/kilo.jsonc` (`mcp.firecrawl`,
+  `mcp.playwright`) launch installed binaries by name; both installers
+  pin their npm packages next to the Kilo pin. Changing a server's
+  package, version, or command means updating `kilo.jsonc` and both
+  installers in the same change.
 - An agent's name is its filename in `config/agents/`. Renaming or
   removing one means updating, in the same change: `default_agent` in
   `config/kilo.jsonc` (a missing default agent aborts every run), the

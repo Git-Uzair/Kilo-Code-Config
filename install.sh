@@ -12,15 +12,25 @@ set -euo pipefail
 # each is harmless on a version that fixed the underlying bug, so all are
 # kept.
 PIN="7.8.18"
+# MCP servers that kilo.jsonc launches by name, pinned beside the CLI
+# (see install.ps1)
+PKGS=("@kilocode/cli@${PIN}" "firecrawl-mcp@3.36.1" "@playwright/mcp@0.0.84")
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-PKG="@kilocode/cli@${PIN}"
-[ "${1:-}" = "--latest" ] && PKG="@kilocode/cli@latest"
+if [ "${1:-}" = "--latest" ]; then
+  PKGS=("@kilocode/cli@latest" "firecrawl-mcp@latest" "@playwright/mcp@latest")
+fi
 
 echo "== Kilo CLI config installer =="
 for tool in node npm; do
   command -v "$tool" >/dev/null || { echo "ERROR: $tool required but not on PATH"; exit 1; }
 done
+# firecrawl-mcp declares engines node >=22.0.0
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+if [ "$NODE_MAJOR" -lt 22 ]; then
+  echo "ERROR: Node.js 22 or newer is required (found $(node --version)): the Firecrawl MCP server needs it"
+  exit 1
+fi
 
 # Back up before the CLI install: the first kilo invocation (the version
 # check below) auto-creates a skeleton ~/.config/kilo, which would otherwise
@@ -34,9 +44,22 @@ for d in "$CFG" "$KILO"; do
   fi
 done
 
-echo "Installing $PKG ..."
-npm install -g "$PKG"
+# the Kilo CLI and the MCP servers kilo.jsonc launches by name
+echo "Installing ${PKGS[*]} ..."
+npm install -g "${PKGS[@]}"
 echo "kilo version: $(kilo --version)"
+# the Playwright MCP drives Google Chrome (--browser chrome); these are the
+# paths Playwright itself checks. Installing Chrome is left to the user.
+case "$(uname -s)" in
+  Darwin) CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ;;
+  *) CHROME="/opt/google/chrome/chrome" ;;
+esac
+if [ -x "$CHROME" ]; then
+  echo "Google Chrome found for the Playwright MCP: $CHROME"
+else
+  echo "WARN: Google Chrome not found at $CHROME. The browser tools (Playwright MCP) need it:"
+  echo "  install it from https://www.google.com/chrome/ or run: npx playwright install chrome (needs admin rights)"
+fi
 mkdir -p "$CFG/agents" "$KILO/skills"
 cp "$REPO_ROOT/config/kilo.jsonc" "$CFG/"
 cp "$REPO_ROOT/config/instructions.md" "$CFG/"
@@ -120,5 +143,10 @@ echo "== Agent roster =="
 # to the console; roster lines are on stdout
 kilo agent list | grep -E '^\S+ \((primary|subagent|all)\)' || true
 echo ""
+echo "== MCP servers =="
+# status lines only; the command lines below them contain "-mcp"
+kilo mcp list | grep -E 'firecrawl|playwright' | grep -v -- '-mcp' || true
+echo ""
 echo "Done. Expected custom agents: quick (default), boss, argon, gemini-coder."
+echo "      Expected MCP servers: firecrawl and playwright, both connected."
 echo "Try:  kilo   (opens the TUI in quick; Tab cycles to boss and argon)"

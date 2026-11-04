@@ -14,6 +14,9 @@ $ErrorActionPreference = 'Stop'
 # each is harmless on a version that fixed the underlying bug, so all are
 # kept.
 $pin = '7.8.18'
+# MCP servers that kilo.jsonc launches by name (mcp.firecrawl,
+# mcp.playwright), pinned beside the CLI and verified with it 2026-11-04.
+$mcpPins = @('firecrawl-mcp@3.36.1', '@playwright/mcp@0.0.84')
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
@@ -24,6 +27,11 @@ foreach ($tool in @('node', 'npm')) {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
         throw "$tool is required but not on PATH. Install it and re-run."
     }
+}
+# firecrawl-mcp declares engines node >=22.0.0.
+$nodeVersion = (node --version).Trim()
+if ([int]($nodeVersion.TrimStart('v').Split('.')[0]) -lt 22) {
+    throw "Node.js 22 or newer is required (found $nodeVersion): the Firecrawl MCP server needs it."
 }
 
 # 2. Back up any existing state - before the CLI install: the first kilo
@@ -39,12 +47,32 @@ foreach ($d in @($cfgDir, $kiloDir)) {
     }
 }
 
-# 3. Kilo CLI
-if ($Latest) { $pkg = '@kilocode/cli@latest' } else { $pkg = "@kilocode/cli@$pin" }
-Write-Host "Installing $pkg ..."
-npm install -g $pkg
+# 3. Kilo CLI and the MCP servers kilo.jsonc launches by name. Without
+# them on PATH, `kilo mcp list` shows both servers as failed.
+if ($Latest) {
+    $pkgs = @('@kilocode/cli@latest', 'firecrawl-mcp@latest', '@playwright/mcp@latest')
+}
+else {
+    $pkgs = @("@kilocode/cli@$pin") + $mcpPins
+}
+Write-Host "Installing $($pkgs -join ', ') ..."
+npm install -g @pkgs   # splatted: one argument per package for npm.ps1 and npm.cmd alike
 if ($LASTEXITCODE -ne 0) { throw "npm install failed (exit $LASTEXITCODE)" }
 Write-Host ("kilo version: " + (kilo --version))
+# The Playwright MCP drives Google Chrome (--browser chrome). These are the
+# prefixes Playwright itself searches on Windows. Installing Chrome is left
+# to the user: Playwright's own Chrome installer is a machine-wide MSI.
+$chrome = @($env:LOCALAPPDATA, $env:ProgramFiles, ${env:ProgramFiles(x86)}) |
+    Where-Object { $_ } |
+    ForEach-Object { Join-Path $_ 'Google\Chrome\Application\chrome.exe' } |
+    Where-Object { Test-Path $_ } |
+    Select-Object -First 1
+if ($chrome) {
+    Write-Host "Google Chrome found for the Playwright MCP: $chrome"
+}
+else {
+    Write-Warning "Google Chrome not found. The browser tools (Playwright MCP) need it: install it from https://www.google.com/chrome/ or run 'npx playwright install chrome' in an Administrator terminal."
+}
 
 # 4. Copy config. ~/.config/kilo/agents mirrors config/agents: an agent
 # this repo no longer ships is removed (the backup above keeps it), so a
@@ -174,5 +202,13 @@ Write-Host "== Agent roster ==" -ForegroundColor Cyan
 # stderr streams to the console as live progress.
 kilo agent list | Select-String -Pattern '^\S+ \((primary|subagent|all)\)' | ForEach-Object { $_.Line }
 Write-Host ""
+Write-Host "== MCP servers ==" -ForegroundColor Cyan
+# Same stdout-only rule. Each server is reduced to "<name>: <status>" so the
+# result reads the same in any console.
+kilo mcp list | ForEach-Object { $_ -replace '\x1b\[[0-9;]*m', '' } |
+    Select-String -Pattern '\b(firecrawl|playwright)\s+(\w+)' |
+    ForEach-Object { "  $($_.Matches[0].Groups[1].Value): $($_.Matches[0].Groups[2].Value)" }
+Write-Host ""
 Write-Host "Done. Expected custom agents: quick (default), boss, argon, gemini-coder."
+Write-Host "      Expected MCP servers: firecrawl and playwright, both connected."
 Write-Host "Try:  kilo   (opens the TUI in quick; Tab cycles to boss and argon)"

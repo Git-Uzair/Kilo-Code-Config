@@ -74,18 +74,21 @@
 
   // Web search/scrape via Firecrawl MCP; key from user-scope env var.
   // Local stdio keeps the key out of URLs, logs, and `kilo mcp list`.
-  // Browser automation via Playwright MCP (headed Chrome).
+  // Browser automation via Playwright MCP (headed Google Chrome).
+  // install.ps1 / install.sh install both servers globally at pinned
+  // versions, so they launch by name instead of `npx -y` downloading them
+  // as a session starts. Change a server here and its pin there together.
   "mcp": {
     "firecrawl": {
       "type": "local",
-      "command": ["npx", "-y", "firecrawl-mcp"],
+      "command": ["firecrawl-mcp"],
       "environment": { "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}" },
       "enabled": true,
       "timeout": 60000
     },
     "playwright": {
       "type": "local",
-      "command": ["npx", "-y", "@playwright/mcp@latest", "--browser", "chrome"],
+      "command": ["playwright-mcp", "--browser", "chrome"],
       "enabled": true,
       "timeout": 60000
     }
