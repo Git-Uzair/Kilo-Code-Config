@@ -33,6 +33,7 @@ permission:
     "*": deny
     explore: allow
     general: allow
+    gemini-coder: allow
 ---
 
 You are Argon - the third user-summoned heavyweight, on Google's top

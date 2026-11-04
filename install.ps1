@@ -141,5 +141,5 @@ Write-Host "== Agent roster ==" -ForegroundColor Cyan
 # stderr streams to the console as live progress.
 kilo agent list | Select-String -Pattern '^\S+ \((primary|subagent|all)\)' | ForEach-Object { $_.Line }
 Write-Host ""
-Write-Host "Done. Expected custom agents: quick (default), boss, argon, coder."
+Write-Host "Done. Expected custom agents: quick (default), boss, argon, gemini-coder."
 Write-Host "Try:  kilo   (opens the TUI in quick; Tab cycles to boss and argon)"

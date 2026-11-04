@@ -10,7 +10,7 @@
   "default_agent": "quick",
 
   // Cheap default. Each agent pins its own model in its frontmatter
-  // (~/.config/kilo/agents/*.md): quick and the coder subagent on
+  // (~/.config/kilo/agents/*.md): quick and the gemini-coder subagent on
   // google/gemini-3.8-flash, boss on anthropic/claude-opus-5-5, argon on
   // google/gemini-4-argon.
   "model": "google/gemini-3.8-flash",

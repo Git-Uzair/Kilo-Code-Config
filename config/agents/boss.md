@@ -43,6 +43,7 @@ permission:
     "*": deny
     explore: allow
     general: allow
+    gemini-coder: allow
 ---
 
 You are the boss - the model the user reaches for when the task is worth

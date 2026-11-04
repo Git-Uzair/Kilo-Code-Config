@@ -101,5 +101,5 @@ echo "== Agent roster =="
 # to the console; roster lines are on stdout
 kilo agent list | grep -E '^\S+ \((primary|subagent|all)\)' || true
 echo ""
-echo "Done. Expected custom agents: quick (default), boss, argon, coder."
+echo "Done. Expected custom agents: quick (default), boss, argon, gemini-coder."
 echo "Try:  kilo   (opens the TUI in quick; Tab cycles to boss and argon)"
