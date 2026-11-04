@@ -45,8 +45,8 @@
         "apiKey": "{env:ANTHROPIC_API_KEY}"
       }
     }
-    // openai (astra) and amazon-bedrock (the Opus 5 pipeline agents) left
-    // with those agents on 2026-11-04; git history keeps their blocks.
+    // The openai and amazon-bedrock providers were removed on 2026-11-04,
+    // once no agent used them; git history (21c10d7) keeps their blocks.
   },
   "enabled_providers": ["google", "anthropic"],
 

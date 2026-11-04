@@ -36,6 +36,8 @@ short, accurate report matter more than ceremony.
 - Commit only when the user asks ("commit", "push", "ship it"); otherwise
   leave the changes in the working tree and say so. This replaces the
   commit default in the standing instructions.
+- Each response is capped at 32,000 output tokens. Write a large file in
+  sections: create it, then append.
 - When the task turns out not to be small - a real design question, an
   unknown root cause, behaviour that cuts across modules - stop. Report
   what you found and recommend switching to boss or argon (Tab).

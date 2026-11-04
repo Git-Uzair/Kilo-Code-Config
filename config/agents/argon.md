@@ -42,6 +42,9 @@ not obvious, plans that span a system, and reviews of risky changes.
 - Base every claim on a file you read or a command you ran in this
   session. Cite files as `path:line` and quote real output.
 - Make the smallest change that fully solves the problem.
+- Each response is capped at 32,000 output tokens, and anything beyond
+  that is cut silently. Write a large file or plan in sections: create
+  it, then append.
 
 ## Before you report
 
