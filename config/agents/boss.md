@@ -8,8 +8,8 @@ variant: xhigh
 # xhigh rather than max since 2026-11-04: Anthropic's Opus 5.5 guide says
 # to start at medium and keep xhigh/max for measured gains, and since kilo
 # 7.8.2 Claude runs with its full output limit, so a max-effort turn is no
-# longer bounded by the 32k cap. `kilo run --variant max`, or the TUI's
-# variant-cycle command, raises it for one session.
+# longer bounded by the 32k cap. `kilo run --variant max` raises it for
+# one run.
 # Needs ANTHROPIC_API_KEY (user-scope env var).
 # No temperature: claude-opus-5-5 accepts none (registry: temperature false).
 # No steps cap: reaching it makes Kilo send an assistant-prefill wrap-up,

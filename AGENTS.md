@@ -19,7 +19,12 @@ do not re-derive.
   `config/instructions.md` into `<tmp>/kilo/` and `config/agents/*.md`
   into `<tmp>/kilo/agents/`, set `XDG_CONFIG_HOME=<tmp>`, then run
   `kilo config check`, `kilo agent list`, and `kilo debug agent <name>`
-  (resolved model, variant, and permission rules).
+  (resolved model, variant, and permission rules). A live `kilo run`
+  there still reads the installed instructions file: the `~/` in the
+  `instructions` entry expands to the real home directory, not
+  `XDG_CONFIG_HOME` (kilo `session/instruction.ts`), so point the scratch
+  copy's entry at its own `instructions.md` before testing prompt
+  behaviour.
 - Prose wraps at roughly 76 columns. That is a style preference for new
   text you write - never an acceptance criterion, never a verification
   finding, and never a reason to re-wrap lines you did not otherwise
