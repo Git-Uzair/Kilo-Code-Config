@@ -14,8 +14,12 @@ do not re-derive.
   the harness around a skill in `config/` instead.
 - There is NO test suite, NO build, and NO lint command - and none should
   ever be bootstrapped. Changes here are verified by reading the diff
-  against the request. The DIRECT lane with @verifier-lite is the right
-  depth for almost everything in this repo.
+  against the request. Changes under `config/` can also be load-checked
+  without touching the live config: copy `config/kilo.jsonc` and
+  `config/instructions.md` into `<tmp>/kilo/` and `config/agents/*.md`
+  into `<tmp>/kilo/agents/`, set `XDG_CONFIG_HOME=<tmp>`, then run
+  `kilo config check`, `kilo agent list`, and `kilo debug agent <name>`
+  (resolved model, variant, and permission rules).
 - Prose wraps at roughly 76 columns. That is a style preference for new
   text you write - never an acceptance criterion, never a verification
   finding, and never a reason to re-wrap lines you did not otherwise
@@ -27,12 +31,14 @@ do not re-derive.
 - This repo is the source of truth that the installers copy FROM. The
   installed live config lives at `~/.config/kilo/` - editing that
   directly is always wrong here; edit `config/` and re-run `install.ps1`
-  (or copy the changed file over manually when asked).
-- The PIPELINE lane runs on `config/agents/worker.md`: one Flash session
-  plans, then implements each task via `task_id` resume. Worker-authored
-  plans in `docs/plans/` are deliberately lighter than `@planner`'s
-  exhaustive stranger-executable format - the author executes them
-  itself. Do not "fix" a lighter worker plan into the planner format.
+  (or copy the changed file over manually when asked). The installers
+  mirror `config/agents/` and `skills/`: a file deleted here disappears
+  from the live config on the next install.
+- An agent's name is its filename in `config/agents/`. Renaming or
+  removing one means updating, in the same change: `default_agent` in
+  `config/kilo.jsonc` (a missing default agent aborts every run), the
+  `permission.task` lists of the agents that dispatch it, the installers'
+  expected-roster lines, and the README.
 - Commits go straight to `main`, one commit per task, message style per
   `git log` (`feat:`, `fix:`, `docs:`, `chore:`, `agents:`). Push only
   when asked.

@@ -1,98 +1,71 @@
-# Kilo Multi-Agent Pipeline
+# Kilo Code CLI config
 
-A production-hardened global configuration for the [Kilo Code CLI](https://kilo.ai)
-that turns it into an unattended multi-agent engineering pipeline: point it at a
-repo, give it a task, walk away. Built and battle-tested on Windows 11 against
-Kilo CLI 7.4.22; pinned to 7.7.1 since 2026-09-15 (previously 7.5.16). The
-bump is load-bearing: the worker agent's resume-based PIPELINE, the Kilo
-Swarm shared board, codebase indexing, and wakeup scheduling all need
->=7.6/7.7. The battle-testing and the design notes below predate 7.5.x -
-none has been re-verified on 7.7.1 yet. The config itself is OS-agnostic.
+A global configuration for the [Kilo Code CLI](https://kilo.ai) with:
 
-No Kilo account or gateway required - you bring your own API keys.
+- three agents you talk to;
+- one cheap implementer they delegate to;
+- a vendored skill set;
+- an allow/deny permission envelope.
 
-## The pipeline
+You bring your own API keys; no Kilo account or gateway is required.
+Built on Windows 11 and pinned to Kilo CLI 7.8.18 (2026-11-04). The
+config itself is OS-agnostic.
+
+## Agents
 
 | Agent | Model | Role |
 |---|---|---|
-| **conductor** | gemini-3.8-flash *(Google)* | Default entry point. Sizes every request into a lane - ANSWER, DIRECT, or PIPELINE - and routes it. Never writes code. |
-| **quick** | gemini-3.8-flash *(Google)* | User-selected solo fast lane (`Tab` / `--agent quick`): one-sentence tasks end to end, no pipeline, no plan files. |
-| **worker** | gemini-3.8-flash *(Google)* | PIPELINE implementer. ONE persistent session per run: researches and writes the plan on first dispatch, then implements each task via `task_id` resume with its repo understanding intact. |
-| **planner** | claude-opus-5 *(Bedrock)* | Explicit-request-only since 2026-09-15 (name `@planner` or ask for a deep/Opus plan). Writes the exhaustive stranger-executable plan format. |
-| **coder** | gemini-3.8-flash *(Google)* | DIRECT-lane implementer: failing test first (code only), minimal diff, commit per task. |
-| **opus-coder** | claude-opus-5 *(Bedrock)* | Escalation implementer for `HARD` tasks and repeated failures. Gated - never the first resort. |
-| **verifier** | claude-opus-5 *(Bedrock)* | Adversarial PIPELINE gate: runs the suite, probes edge cases empirically, separates BLOCKING findings from advisory NOTES. |
-| **verifier-lite** | gemini-3.8-flash *(Google)* | Fast DIRECT-lane gate: reads the diff against the acceptance criteria, runs tests only when executable code changed. |
-| **boss** | claude-opus-5-5 @ max reasoning *(Anthropic)* | User-summoned solo heavyweight (`Tab` / `--agent boss` / naming `@boss`): coding, planning, verifying, debugging for tasks the user judges worth the biggest model. Never auto-routed. |
-| **astra** | gpt-6-astra @ high reasoning *(OpenAI)* | Second user-summoned heavyweight (`Tab` / `--agent astra` / naming `@astra`): same contract as boss on OpenAI's top reasoning model. Never auto-routed. |
-| **argon** | gemini-4-argon @ high reasoning *(Google)* | Third user-summoned heavyweight (`Tab` / `--agent argon` / naming `@argon`): same contract as boss on Google's top reasoning model. Never auto-routed. |
+| **quick** *(default)* | gemini-3.8-flash *(Google)* | Small, well-defined tasks done end to end while you watch. Works alone, writes no plan files, commits only when asked. |
+| **boss** | claude-opus-5-5 @ xhigh *(Anthropic)* | The hardest work: design, debugging with an unclear cause, planning, review of risky changes. Delegates errands to Flash. |
+| **argon** | gemini-4-argon @ high *(Google)* | The same role as boss, on Google's frontier model. |
+| **gemini-coder** | gemini-3.8-flash *(Google)* | Subagent for boss and argon: implements one fully specified change test-first, runs tests and lint, reports its diff, and never commits. |
+| explore, general | gemini-3.8-flash *(Google)* | Kilo's built-in subagents, pinned to Flash, for bulky reading and research. |
 
-Opus runs through **Amazon Bedrock** on the EU inference profile
-(`amazon-bedrock/eu.anthropic.claude-opus-5`), not the Anthropic API. Same
-model, same list price, EU-pinned routing. The `anthropic` provider is live
-for **boss** (`anthropic/claude-opus-5-5`) and doubles as the Opus rollback:
-flip the three Opus `model:` lines in `config/agents/` back to
-`anthropic/claude-opus-5` and nothing else changes. Boss stays off Bedrock
-deliberately: Fable 5 there requires the `provider_data_share` retention
-mode (enabled only in eu-west-1 for this account), Fable has no `eu.`
-inference profile, and the `global.` profile fanned out worldwide at
-~1-in-3 success when traced (2026-08-21). It moves back the day the account
-gets a usable profile - a one-line model swap in `config/agents/boss.md`.
+**How work flows.**
 
-The `openai` provider is live for **astra** (`openai/gpt-6-astra` at high
-reasoning effort, the registry's middle setting of
-low/medium/high/xhigh/max). Added 2026-09-09 under the 7.5.16 pin and not
-yet live-verified end to end - the wiring mirrors boss, the scars are still
-boss's own.
+- Every session starts in quick. Tab cycles to boss and argon (and to
+  Kilo's built-in primaries).
+- boss and argon do the reasoning and the delicate edits themselves.
+- They delegate two kinds of work: bulky reading goes to explore or
+  general, and edits they can specify completely go to gemini-coder.
+- Writes stay single-threaded: one agent edits the tree at a time, and
+  the delegating agent reviews every delegated diff before committing it.
+- For a risky change they can ask general for a fresh-context review
+  using the ponytail-review skill.
 
-The `google` provider is live for **argon** (`google/gemini-4-argon` at high
-reasoning effort), sharing the `GOOGLE_GENERATIVE_AI_API_KEY` with the Flash
-agents. Live-verified on 2026-10-14.
+**Why this shape.** Until 2026-11-04 this repo ran an eleven-agent
+pipeline: a Flash conductor routed every request through planners,
+coders, and verifiers. It was replaced on evidence.
 
-Flow is proportional to the request. Questions are answered (ANSWER lane).
-Changes that are already fully specified - renames, find-and-replace, config
-values, docs edits, any file count - skip planning entirely: brief → implement
-→ diff-read verification (DIRECT lane). Only work that genuinely needs design
-gets the full plan → implement → verify loop (PIPELINE lane). PIPELINE runs
-on one persistent @worker session: dispatched once to research and write the
-plan, then resumed per task with all of its research still in context - repo
-understanding is paid once per run instead of once per agent, and the reused
-prefix rides provider prompt caching instead of re-reading files. Verdicts are
-three-valued - `PASS`, `PASS WITH NOTES`, `FAIL` - and only BLOCKING findings
-(unmet acceptance criteria, failing tests, secrets) can FAIL; style and
-hygiene observations are advisory NOTES that never trigger a fix cycle.
-Acceptance criteria are copied from the user's words, never invented, and
-re-verification is frozen to the first cycle's base and file list so the
-audit surface cannot grow. Fix loops are hard-capped at three cycles per
-task - then the run stops and reports honestly. Escalation to Opus fires on
-plan `HARD` tags or concrete triggers (second failed cycle, gamed tests,
-conflicting criteria), with an attempt ledger so no failed approach is ever
-retried. Nothing is reported done without a literal verifier `PASS` (or
-`PASS WITH NOTES`).
+- Cognition (2026-04-22, cognition.com/blog/multi-agents-working) found
+  that multi-agent systems "work best today when writes stay
+  single-threaded and the additional agents contribute intelligence
+  rather than actions".
+- The same post found that when a weaker model decides when to escalate,
+  "the quality ceiling was set by the primary".
 
-Permissions are **allow/deny only - zero "ask" rules** - so sessions never
-stall on prompts. A hardened deny-list blocks the destructive stuff outright
-(deletion, force-push, non-localhost network, system mutation, publishing).
+So the strong models now sit in front, and the cheap ones run errands.
+
+**Permissions are allow/deny only - zero "ask" rules - so sessions never
+stall on approval prompts.** A deny-list blocks destructive commands
+outright: deletion, force-push, non-localhost network, system mutation,
+and publishing.
 
 ## Requirements
 
-- Node.js 20+ and git on PATH
+- Node.js 20+ and git on PATH.
 - Windows: PowerShell (7 recommended, 5.1 works). macOS/Linux: bash.
-- An AWS account with **Bedrock model access granted for Claude Opus 5** in an
-  EU region (Bedrock console -> Model access). This is an approval gate, not
-  instant - nothing Opus works until it clears.
-- API keys (set as env vars during install - never stored in this repo):
-  - `GOOGLE_GENERATIVE_AI_API_KEY` - [Google AI Studio](https://aistudio.google.com)
-  - `AWS_BEARER_TOKEN_BEDROCK` - a **long-term** Bedrock API key (AWS console). Short-term keys expire in <=12h and will kill an overnight run mid-flight.
-  - `ANTHROPIC_API_KEY` - powers **boss** (Opus 5.5) and doubles as the Opus
-    rollback path. The pipeline minus boss runs fine without it.
-  - `OPENAI_API_KEY` - powers **astra** (GPT-6 Astra). Must belong to an org
-    with GPT-6 Astra access. The pipeline minus astra runs fine without it.
-  - `FIRECRAWL_API_KEY` *(optional)* - powers the agents' web search via MCP; without it, remove the `mcp.firecrawl` block from `config/kilo.jsonc`
-
-No `AWS_REGION` needed - the region is pinned in `config/kilo.jsonc` under the
-`amazon-bedrock` provider. Change it there if you move regions, and keep the
-model IDs' geo prefix (`eu.`) in `config/agents/*.md` in step with it.
+- API keys, set as user-scope environment variables (never stored in this
+  repo):
+  - `GOOGLE_GENERATIVE_AI_API_KEY`, from
+    [Google AI Studio](https://aistudio.google.com). It runs quick, argon,
+    gemini-coder, the built-in subagents, compaction, and the
+    codebase-indexing embeddings.
+  - `ANTHROPIC_API_KEY` - powers boss. Everything else runs without it.
+  - `FIRECRAWL_API_KEY` *(optional)* - Firecrawl MCP for web search and
+    scraping. Without it, remove the `mcp.firecrawl` block from
+    `config/kilo.jsonc`.
+  - `GEMINI_API_KEY` *(optional)* - only for `kopipasta ask`.
 
 ## Install
 
@@ -100,248 +73,216 @@ model IDs' geo prefix (`eu.`) in `config/agents/*.md` in step with it.
 # Windows
 git clone https://github.com/Git-Uzair/Kilo-Code-Config.git kilo-config
 cd kilo-config
-./install.ps1            # pins @kilocode/cli@7.7.1; -Latest for newest
+./install.ps1            # pins @kilocode/cli@7.8.18; -Latest for newest
 ```
 
 ```bash
 # macOS / Linux
 git clone https://github.com/Git-Uzair/Kilo-Code-Config.git kilo-config
-cd kilo-config && ./install.sh
+cd kilo-config && ./install.sh   # --latest for newest
 ```
 
-The installer backs up any existing `~/.config/kilo` and `~/.kilo` before
-touching them, installs the CLI, copies this config, mirrors `skills/`
-into `~/.kilo/skills` (removing any skill this repo no longer ships),
-installs `kopipasta` (via `uv` or `pip`, best effort), and prints the
-env-var commands for your keys. Then verify:
+The installer:
+
+1. backs up any existing `~/.config/kilo` and `~/.kilo`;
+2. installs the CLI and copies this config;
+3. mirrors `config/agents/` into `~/.config/kilo/agents` and `skills/`
+   into `~/.kilo/skills`, removing any agent or skill this repo no longer
+   ships (the backup keeps them);
+4. installs `kopipasta` (via `uv` or `pip`, best effort);
+5. prints the environment-variable commands for your keys.
+
+Then verify:
 
 ```powershell
-kilo agent list   # expect: conductor, quick, worker, planner, coder,
-                  #         opus-coder, verifier, verifier-lite, boss, astra, argon
+kilo agent list   # expect quick, boss, argon, gemini-coder (plus Kilo's built-ins)
 ```
 
 ## Usage
 
 ```powershell
-# unattended one-shot run in any repo
-kilo run --dir "C:\path\to\repo" --auto "implement X with tests"
-
-# interactive TUI (conductor is the default agent)
+# interactive TUI, starting in quick; Tab cycles to boss and argon
 kilo
 
-# attended and the task is one sentence? use the solo fast lane instead
-kilo --agent quick        # or Tab to `quick` inside the TUI
+# start in a heavyweight
+kilo --agent boss
+kilo --agent argon
 
-# talk to a specialist directly
-#   @planner  @coder  @verifier  @opus-coder  @boss  @astra  @argon   (in the TUI message box)
+# one headless run (--auto approves anything not explicitly denied)
+kilo run --dir "C:\path\to\repo" --agent boss --auto "implement X with tests"
 
-# want the exhaustive Opus plan instead of the worker's lighter one?
-#   name it: "@planner plan this" - execution then goes to a fresh worker
+# boss at max effort for one run (its default is xhigh)
+kilo run --agent boss --variant max "..."
 
-# force the fast path through the conductor in plain words
-#   "this is small, skip the plan" - the conductor's DIRECT lane is binding
+# sharpen a design by interview first (quick, boss, and argon only)
+#   /grill-with-docs   in quick (cheap) or boss / argon (deep)
 
-# escalate a stuck task by hand
-#   "escalate this to @opus-coder"
-
-# the hardest tasks, worth the biggest model (Opus 5.5 @ max reasoning)
-kilo --agent boss         # or name @boss in a request - never auto-routed
-
-# same contract on OpenAI's top reasoning model (GPT-6 Astra @ high)
-kilo --agent astra        # or name @astra in a request - never auto-routed
-
-# same contract on Google's top reasoning model (Gemini 4 Argon @ high)
-kilo --agent argon        # or name @argon in a request - never auto-routed
-
-# sharpen a design by interview first (attended agents only)
-#   /grill-with-docs   in @quick (cheap) or @boss / @astra / @argon (deep)
-
-# after a run: what should change in the harness itself?
+# after a session: what should change in the harness itself?
 #   /retro
 
 # terse replies until "stop caveman"
 #   /caveman           (/ultracave or /megacave compress harder)
 ```
 
-Plans land in `docs/plans/<date>-<slug>.md` inside the target repo and double
-as the run's progress ledger - task statuses, failed-cycle counts, and attempt
-history are updated there as the run proceeds, so runs survive restarts.
+When boss or argon plan, the plan goes to
+`docs/plans/<date>-<slug>.md` in the target repo. It ends with
+`PLAN COMPLETE`, and task statuses are updated in the file as work
+proceeds, so a run survives restarts and compaction.
 
 Skills update with the repo: `git pull`, then re-run the installer.
 
-`kopipasta` is optional but assumed by the `codebase-map` skill: without it
-agents fall back to plain reads. Needs Python 3.10+; install by hand with
-`uv tool install kopipasta` (or `pip install kopipasta`) and check with
-`kopipasta map --help`. The standard invocation used across all agents is
+`kopipasta` is optional but assumed by the `codebase-map` skill; without
+it, agents fall back to plain reads. It needs Python 3.10+. Install it by
+hand with `uv tool install kopipasta` (or `pip install kopipasta`) and
+check it with `kopipasta map --help`. The standard invocation is
 `kopipasta map --json`.
 
-## Design notes (the scars behind the choices)
+## Design notes
 
-Each of these cost a broken run to learn; the config encodes the fix.
-**Version caveat:** every finding below was established on kilo
-7.4.20-7.4.23. The pin moved to 7.5.16 on 2026-09-09 and to 7.7.1 on
-2026-09-15, and none of them has been re-verified since; the workarounds
-are all kept - each is harmless on a version that fixed the underlying
-bug - until someone re-tests them. One is now moot by upstream removal:
-`interactive_terminal` was deleted from the CLI in 7.6.0, so its deny
-lines are inert on 7.7.1 and retained only for older installs:
+Each of these cost a broken run to learn, and the config encodes the fix.
+Findings re-verified on 7.8.18 (2026-11-04) say so; the rest date from
+kilo 7.4.x and are kept because each is harmless on a version that fixed
+the underlying bug.
 
-- **Subagents inherit the caller's permission ceiling.** Deny rules on the
-  conductor cascade into every worker as unoverridable ceilings - so the
-  conductor holds full permissions and its restraint lives in its prompt.
-  Only `task` targets are hard-gated.
-- **Delegation is one level deep, hardcoded.** Subagents cannot spawn
-  subagents; every agent prompt accounts for it.
-- **Never set `steps:` on any agent.** Kilo enforces the cap by appending a
-  trailing assistant message, which both Anthropic (Claude 4.6+/5) and
-  current Gemini reject at the API. Unset means the mechanism never fires.
-- **32k output-token clamp per response** (hardcoded, inherited from
-  upstream). The planner therefore writes its plan file incrementally via
-  append-edits with a `PLAN COMPLETE` end marker, and the conductor refuses
-  to execute a plan without the marker.
-- **Subagent sessions snapshot their permissions at spawn.** Config fixes
-  never reach a resumed `task_id`, so after any permission denial in a
-  child, any mid-run config change, or a failed resume, the conductor
-  dispatches FRESH (for the worker: degraded mode, pointed at the plan
-  file). Everywhere else resuming is now the mechanism, not the exception -
-  see the next bullet.
-- **PIPELINE context reuse via task resume (added 2026-09-15, kilo 7.7.1).**
-  A resumed `task_id` continues the same child session with all its
-  previous messages and tool outputs (7.7.1 runtime task-tool contract;
-  docs: Task tool). The @worker agent is built on this: one Flash session
-  researches, writes the plan, then implements every task via resume - the
-  old planner->coder amnesia (and the exhaustive Opus plan that compensated
-  for it) is gone from the default path. NOT yet smoke-run end to end on
-  this machine: the first post-install PIPELINE run is the smoke test -
-  expect ONE worker child session with multiple user turns
-  (`kilo session list`, or the `session`/`message` tables via `kilo db`),
-  not a row of fresh children.
-- **The Kilo Swarm shared board is on by default since 7.7.0**
-  (`experimental.shared_agent_board: false` disables). A main session and
-  its task descendants exchange `board_post`/`board_read` messages (4 KiB
-  cap). The prompts use it for FACTS, blockers, and corrections; briefs
-  stay authoritative, and verifiers treat posts as leads, never evidence.
-- **Codebase indexing ships configured but disabled** (`indexing` block in
-  `config/kilo.jsonc`: gemini-embedding-001 + embedded LanceDB, key via
-  `{env:GOOGLE_GENERATIVE_AI_API_KEY}`). Flip `enabled` to true to index
-  every workspace, or enable per project via `/indexing` in the TUI; the
-  `semantic_search` tool then appears in every agent's roster and the
-  prompts use it as the first exploration step. Left disabled because it
-  has not been live-run from this machine; prompts degrade gracefully when
-  the tool is absent.
-- **Local recall**: agents are instructed to search past local sessions
-  (titles + high-signal content, current workspace and related worktrees)
-  before re-deriving repo knowledge a previous session already established.
-- **Bedrock's region is pinned in `kilo.jsonc`, not `AWS_REGION`.** An env var
-  only reaches processes started *after* it was set, so a TUI already running
-  when the var is added inherits a stale environment: auth succeeds, region
-  does not, and every Opus subagent dies with `AWS region setting is missing`.
-  A region is not a secret, so it belongs in config where it is deterministic
-  and survives a fresh clone with no extra setup step. Only the API key stays
-  in the environment.
-- **`web_search: true` survives the move to Bedrock - it is not provider-native.**
-  The obvious assumption is that this flag maps to Anthropic's server-side
-  `web_search` tool, which Bedrock does not expose, and that moving the Opus
-  agents therefore costs them search. It does not. `websearch` routes to
-  Parallel through kilo's built-in mcp-parallel transport, independent of the
-  model provider - and needs neither a Kilo account nor a search API key of
-  yours. Verified on Bedrock: `websearch` is in the tool roster and
-  returns real results. The Opus agents keep all three search paths -
-  `websearch`, `webfetch` and the firecrawl MCP - and in practice reach for
-  `webfetch`/firecrawl first for a known URL, per the standing instructions.
-- **The five interactive/turn-control tools (`suggest`, `question`,
-  `plan_enter`, `plan_exit`, `interactive_terminal`) are denied for all
-  subagents** - the same set Kilo's own headless `kilo run` denies. A child
-  session has no user attached, so any of them blocks the child and leaves
-  the conductor's `task` call spinning forever. Observed twice: a trailing
-  `suggest` after a final report (2026-08-08), and `plan_exit` called by the
-  planner as its completion signal (2026-08-12, 2026-08-21) - Kilo then
-  awaits an implement-or-refine follow-up question nobody can answer. The
-  conductor additionally denies `question`/`plan_enter`/`plan_exit`/
-  `interactive_terminal` for itself, which cascades to every child as a hard
-  ceiling (subagents inherit the caller's permission envelope).
-- **Kilo's deprecated built-in `orchestrator` is disabled.** It sits one Tab
-  away from the real conductor, hijacks runs with generic delegation, and
-  ignores the verification gate.
-- **The verifier can execute but never mutate**: git locked to read-only
-  forms plus disposable detached worktrees (`.worktrees/`) for at-base and
-  mutated-state testing.
-- **Long-session hygiene**: Kilo 7.4.20 embeds Bun 1.3.14, which has a known
-  Windows runtime defect
-  ([bun#31941](https://github.com/oven-sh/bun/issues/31941), fixed in Bun
-  1.4.0, not yet shipped in a Kilo build). Restart TUI sessions every few
-  hours; the plan-file + commit-per-task design makes resuming free.
-- **kilo 7.4.23 drops `/v1` from the Anthropic API URL.** The anthropic
-  provider sends requests to `api.anthropic.com/messages`, which does not
-  exist, so every model on that provider fails with a bare `Not Found` -
-  no JSON error body, so nothing names the real cause. `kilo.db`'s
-  `AI_APICallError` records carry the bad URL, and the identical request
-  replayed at `/v1/messages` returns 200. Fixed by pinning
-  `baseURL: "https://api.anthropic.com/v1"` in the provider options (the
-  SDK appends `/messages`); harmless on versions that build the URL
-  correctly. This also retro-explains the 2026-08-21 boss bring-up 404
-  that was blamed on missing Fable access.
-- **The grep tool hangs forever past 100 matches (Windows)**: kilo's `grep`
-  caps results at an internal `MAX_SEARCH_LIMIT` of 100 (the `limit` param
-  cannot exceed it), and the over-limit truncation path loses the search's
-  completion on Windows - the call stays `"running"` forever with no child
-  process, no error event, and no timeout, wedging the pipeline while the
-  TUI keeps rendering. Deterministic and repo-independent: 90 matching lines
-  returns, 150 hangs, in a fresh session on a scratch repo. Diagnose via the
-  `part` table in `~/.local/share/kilo/kilo.db` (the stuck call keeps
-  `"status":"running"`). The standing instructions therefore require narrow
-  grep patterns and a bash pre-count when volume is uncertain; `glob` shares
-  the same truncation path, so keep it specific too. Recovery: Esc to abort
-  the hung turn, then dispatch a fresh task.
+- **`default_agent` must name a real, visible primary agent.**
+  Re-verified on 7.8.18. A missing agent aborts every run with
+  `default agent "<name>" not found`; Kilo does not fall back. Only an
+  unset key falls back to the built-in `code`. Rename or remove the
+  default agent and `default_agent` must change in the same commit.
+- **Subagents run under their own rules, not their caller's.** Changed in
+  7.8.13 (changelog) and read in `kilocode/tool/task.ts` at the v7.8.18
+  tag.
+  - A custom agent's `edit` rules and broad `bash` denies no longer cap
+    the subagents it starts. Each subagent gets the global rules plus its
+    own frontmatter, appended last so its rules win.
+  - Kilo itself denies `question`, `suggest`, and `task` in every
+    subagent: subagents cannot ask the user or spawn subagents of their
+    own.
+  - That is why gemini-coder carries its own git denies (commit, push,
+    reset, checkout, restore, stash, and other state-changing commands).
+    It shares the caller's working tree, and those commands could destroy
+    the caller's uncommitted work.
+- **The 32k output cap now binds only non-Claude models.** Since 7.8.2,
+  Claude on first-party routes requests its full output limit; every
+  other model keeps the 32,000-token cap per response, and the overflow
+  is silently truncated. The Gemini agents therefore write large files in
+  sections. boss does not need to.
+- **No temperature on Gemini agents.** Google's prompting guide (read
+  2026-11-04) says Gemini 4 and 3.6+ ignore custom `temperature`,
+  `top_p`, and `top_k`, return deprecation warning headers, and will
+  return HTTP 400 in a future release. The old `temperature: 0.1` lines
+  are gone.
+- **The grep hang is fixed.** Re-verified on 7.8.18.
+  - Old behaviour (kilo 7.4.20, Windows): a grep with more than 100
+    matches stayed `"running"` forever and wedged the session.
+  - On 7.8.18 the same test against a 300-match file returns
+    `Found 100 matches (more matches available)` and exits normally.
+  - The narrow-pattern workaround has been removed from the
+    instructions.
+  - The Bun runtime behind it is fixed too: 7.5.0 builds with Bun 1.4
+    and 7.8.7 with Bun 1.4.2. The old advice to restart long TUI sessions
+    every few hours no longer applies.
+- **Never set `steps:` on any agent.** Kilo enforces the cap by appending
+  a trailing assistant message, which Anthropic (Claude 4.6+/5) and
+  current Gemini reject at the API. Left unset, the mechanism never fires.
+  Not re-verified on 7.8.18.
+- **The turn-control tools `suggest`, `plan_enter`, and `plan_exit` are
+  denied on every custom agent.**
+  - Plans are files in `docs/plans/`, not Kilo's plan mode.
+  - A trailing turn-control call once left sessions spinning forever:
+    `suggest` after a final report (2026-08-08), and `plan_exit` parking
+    a session on a follow-up question no one could answer (2026-08-12,
+    2026-08-21).
+- **Interview skills are gated by permission.** Kilo reads only `name`
+  and `description` from skill frontmatter; the 7.8.18 binary has no
+  `disable-model-invocation`.
+  - `kilo.jsonc` denies `grilling` and `grill-with-docs` globally.
+  - quick, boss, and argon re-allow them, because only an attended
+    session has a user to interview.
+- **Kilo's deprecated built-in `orchestrator` is disabled.** It once
+  hijacked a run with generic delegation.
+- **Kilo 7.4.23 dropped `/v1` from the Anthropic API URL.**
+  - Requests went to `api.anthropic.com/messages`, which does not exist,
+    so boss failed with a bare `Not Found` and no error body naming the
+    cause.
+  - `kilo.db`'s `AI_APICallError` records carry the bad URL, and the same
+    request replayed at `/v1/messages` returns 200.
+  - The fix is the pinned `baseURL: "https://api.anthropic.com/v1"` (the
+    SDK appends `/messages`). It is harmless on versions that build the
+    URL correctly. Not re-verified on 7.8.18.
+- **`web_search: true` is not provider-native.** `websearch` routes to
+  Parallel through Kilo's built-in mcp-parallel transport, independent of
+  the model provider. It needs neither a Kilo account nor a search API
+  key of yours.
+- **Codebase indexing ships configured but disabled.** The `indexing`
+  block in `config/kilo.jsonc` uses gemini-embedding-001 and embedded
+  LanceDB, with the key via `{env:GOOGLE_GENERATIVE_AI_API_KEY}`.
+  - Turn it on by flipping `enabled` to true (indexes every workspace),
+    or per project with `/indexing` in the TUI.
+  - The `semantic_search` tool then appears in every agent's roster.
+    Agents use it first when it is present and skip it when it is not.
+- **Compaction runs at 40% of the context window, on Flash.** The 7.8.20
+  release candidate fixes auto-compaction starting well before the
+  configured threshold; on the 7.8.18 pin it can fire early.
+- **The installers mirror agents and skills.** Deleting a file in
+  `config/agents/` or `skills/` removes it from the live config on the
+  next install, so retired agents cannot linger in the picker.
 
 ## What's in the box
 
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the eleven agents (system prompt + permissions each)
+config/agents/*.md         the four agents (system prompt + permissions each)
 skills/                    every skill the harness loads (vendored + local codebase-map)
 skills/vendor.psd1         upstream repo, pinned commit, license files per vendored skill
 scripts/sync-skills.ps1    re-vendors skills from vendor.psd1, checks dependency closure
 install.ps1 / install.sh   one-shot setup
+docs/plans/                plans for changes to this repo
 ```
 
 ## Skills
 
 Every skill the harness loads ships in `skills/`. The installers mirror
 that folder into `~/.kilo/skills` and remove anything else there (the
-pre-install backup keeps it), so to keep a skill of your own, add it to
-`skills/`. Third-party skills are vendored byte-for-byte at the commits
-pinned in `skills/vendor.psd1`, each folder with its upstream license:
+pre-install backup keeps it). To keep a skill of your own, add it to
+`skills/`.
 
-- [mattpocock/skills](https://github.com/mattpocock/skills) (MIT) -
+Third-party skills are vendored byte-for-byte at the commits pinned in
+`skills/vendor.psd1` (last refreshed to upstream HEAD on 2026-11-04).
+Each folder carries its upstream license.
+
+- [mattpocock/skills](https://github.com/mattpocock/skills) (MIT):
   `tdd`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`,
-  `grilling`, `grill-with-docs`, `retro`, `writing-for-agents`
+  `grilling`, `grill-with-docs`, `retro`, `writing-for-agents`.
 - [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman)
-  (Apache-2.0, NOTICE included) - `caveman`, `ultracave`, `megacave`;
-  the skill folders only, not the Caveman CLI, proxy, or gateway
+  (Apache-2.0, NOTICE included): `caveman`, `ultracave`, `megacave`. Only
+  the skill folders are vendored, not the Caveman CLI, proxy, or gateway.
 - [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail)
-  (MIT) - `ponytail`, `ponytail-review`
+  (MIT): `ponytail` (the smallest change that fully solves the task) and
+  `ponytail-review`. ponytail-review is a full quality review:
+  correctness, safety, load, tests, speed, and leanness, with numbered
+  findings and a verdict.
 - [anthropics/skills](https://github.com/anthropics/skills)
-  (Apache-2.0) - `frontend-design`
+  (Apache-2.0): `frontend-design`.
 
-Plus one local skill (MIT, same as the config): `codebase-map` - map a
-repository's symbols with
-[kopipasta](https://github.com/mkorpela/kopipasta) before reading files,
-so exploration costs one command instead of a fan-out of reads.
+There is one local skill (MIT, same as the config): `codebase-map`. It
+maps a repository's symbols with
+[kopipasta](https://github.com/mkorpela/kopipasta) before any file is
+read, so exploration costs one command instead of a fan-out of reads.
 
-Every skill a shipped skill depends on ships too, and
-`scripts/sync-skills.ps1` re-checks that on every sync. Kilo ignores the
-upstream `disable-model-invocation` flag, so the interview skills
-(`grilling`, `grill-with-docs`) are gated by permission instead: only
-@quick, @boss, @astra, and @argon can load them.
+Every skill that a shipped skill depends on ships too, and
+`scripts/sync-skills.ps1` re-checks that on every sync.
 
-Refreshing vendored skills (maintainers): run
-`./scripts/sync-skills.ps1 -Latest`, review `git diff -- skills`, paste
-the printed commits into `skills/vendor.psd1`, and commit.
+To refresh the vendored skills (maintainers):
+
+1. Run `./scripts/sync-skills.ps1 -Latest`.
+2. Review `git diff -- skills`.
+3. Paste the printed commits into `skills/vendor.psd1`.
+4. Commit.
 
 ## License
 
 MIT - see [LICENSE](LICENSE). Vendored skills under `skills/` keep their
-upstream licenses (MIT or Apache-2.0); each vendored folder carries its
-license file(s).
+upstream licenses (MIT or Apache-2.0), and each vendored folder carries
+its license file(s).
