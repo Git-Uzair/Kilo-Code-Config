@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Kilo multi-agent pipeline - macOS/Linux installer
+# Kilo CLI config - macOS/Linux installer
 # Idempotent: backs up existing config first.
 set -euo pipefail
 # Pin history: 7.4.22 -> 7.5.16 (2026-09-09) -> 7.7.1 (2026-09-15) ->
@@ -17,7 +17,7 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 PKG="@kilocode/cli@${PIN}"
 [ "${1:-}" = "--latest" ] && PKG="@kilocode/cli@latest"
 
-echo "== Kilo multi-agent pipeline installer =="
+echo "== Kilo CLI config installer =="
 for tool in node npm; do
   command -v "$tool" >/dev/null || { echo "ERROR: $tool required but not on PATH"; exit 1; }
 done
@@ -40,6 +40,15 @@ echo "kilo version: $(kilo --version)"
 mkdir -p "$CFG/agents" "$KILO/skills"
 cp "$REPO_ROOT/config/kilo.jsonc" "$CFG/"
 cp "$REPO_ROOT/config/instructions.md" "$CFG/"
+# agents: ~/.config/kilo/agents mirrors config/agents (see install.ps1 step 4)
+for f in "$CFG"/agents/*.md; do
+  [ -f "$f" ] || continue
+  name="$(basename "$f")"
+  if [ ! -f "$REPO_ROOT/config/agents/$name" ]; then
+    rm -f "$f"
+    echo "  removed agent ${name%.md} (not shipped by this repo)"
+  fi
+done
 cp "$REPO_ROOT"/config/agents/*.md "$CFG/agents/"
 echo "Config installed to $CFG"
 
@@ -76,20 +85,12 @@ fi
 echo ""
 echo "== Set your API keys (add to your shell profile) =="
 echo '  export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"'
-echo '  export AWS_BEARER_TOKEN_BEDROCK="<your-bedrock-api-key>"'
 echo '  export ANTHROPIC_API_KEY="<anthropic-key-for-boss>"'
-echo '  export OPENAI_API_KEY="<openai-key-for-astra>"'
 echo '  export FIRECRAWL_API_KEY="<optional-firecrawl-key>"'
 echo '  export GEMINI_API_KEY="<optional-key-for-kopipasta-ask>"'
+echo "  (ANTHROPIC_API_KEY is needed for @boss only; the Google key runs everything else)"
 echo "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
 echo "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/kilo.jsonc)"
-echo ""
-echo "  Bedrock notes:"
-echo "    - Use a LONG-TERM Bedrock API key; short-term ones expire in <=12h."
-echo "    - Claude Opus 5 model access must be granted in the Bedrock console."
-echo "    - No AWS_REGION needed: the region is pinned in kilo.jsonc."
-echo "    - ANTHROPIC_API_KEY: needed for @boss (Opus 5.5); otherwise optional -"
-echo "      it is also the Opus rollback path."
 echo ""
 echo "  Already have a kilo TUI open? Restart it - a running process keeps the"
 echo "  environment it started with and will not see keys you set just now."
@@ -100,5 +101,5 @@ echo "== Agent roster =="
 # to the console; roster lines are on stdout
 kilo agent list | grep -E '^\S+ \((primary|subagent|all)\)' || true
 echo ""
-echo "Done. Expected custom agents: conductor, quick, worker, planner, coder, opus-coder, verifier, verifier-lite, boss, astra, argon."
-echo 'Try:  kilo run --dir <repo> --auto "your task"'
+echo "Done. Expected custom agents: quick (default), boss, argon, coder."
+echo "Try:  kilo   (opens the TUI in quick; Tab cycles to boss and argon)"

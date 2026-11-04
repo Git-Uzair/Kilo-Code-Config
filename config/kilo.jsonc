@@ -1,19 +1,18 @@
 {
   "$schema": "https://app.kilo.ai/config.json",
 
-  // Every session starts in the multi-agent pipeline unless --agent says
-  // otherwise. Falls back to built-in "code" if conductor is ever invalid.
-  // For attended one-sentence tasks, switch to the solo fast lane instead:
-  // Tab in the TUI or `--agent quick` - no pipeline, no plan files.
-  "default_agent": "conductor",
+  // Every session starts in quick, the cheap solo lane, unless --agent says
+  // otherwise; Tab in the TUI cycles to the other primaries (boss, argon,
+  // Kilo's built-ins). The value must name a visible primary agent: a
+  // missing one throws `default agent "<name>" not found` at session start
+  // instead of falling back (agent.ts defaultInfo, kilo 7.8.x). Only an
+  // unset key falls back to the built-in "code".
+  "default_agent": "quick",
 
-  // Cheap default. The pipeline pins its own models per agent:
-  // conductor/worker/coder/quick/verifier-lite = google/gemini-3.8-flash;
-  // planner/opus-coder/verifier = amazon-bedrock/eu.anthropic.claude-opus-5;
-  // boss = anthropic/claude-opus-5-5 at variant max;
-  // astra = openai/gpt-6-astra at variant high;
-  // argon = google/gemini-4-argon at variant high
-  // (see ~/.config/kilo/agents/*.md).
+  // Cheap default. Each agent pins its own model in its frontmatter
+  // (~/.config/kilo/agents/*.md): quick and the coder subagent on
+  // google/gemini-3.8-flash, boss on anthropic/claude-opus-5-5, argon on
+  // google/gemini-4-argon.
   "model": "google/gemini-3.8-flash",
   "small_model": "google/gemini-3.8-flash",
   "instructions": ["~/.config/kilo/instructions.md"],
@@ -23,51 +22,33 @@
   // transport (tool metadata: provider=parallel, transport=mcp-parallel; the
   // sku_search count in results is Parallel's usage unit). Verified working
   // with no Kilo account (auth.json empty, `kilo profile` reports
-  // unauthenticated) and no search API key of ours. Being provider-agnostic,
-  // it survived the Opus move to Bedrock unchanged.
+  // unauthenticated) and no search API key of ours.
   "web_search": true,
 
   // Own API keys only - no Kilo gateway/account. Keys live in user-scope
   // env vars, never in this file.
   "provider": {
     "google": { "env": ["GOOGLE_GENERATIVE_AI_API_KEY"] },
-    // Live for @boss (anthropic/claude-opus-5-5) and the rollback path for the
-    // Opus agents: flip their `model:` back to anthropic/claude-opus-5 and
-    // they work again with no other change.
+    // Live for @boss (anthropic/claude-opus-5-5).
     //
     // baseURL is pinned because kilo 7.4.23 builds the anthropic URL without
     // /v1: requests go to api.anthropic.com/messages, which does not exist,
     // so every model on this provider dies with a bare 404 "Not Found"
     // (kilo.db's AI_APICallError records carry the bad URL; the identical
     // request replayed at /v1/messages returns 200). The SDK appends
-    // /messages to this value. Google and Bedrock are unaffected.
-    // Kept under the 7.5.16 pin (2026-09-09): not re-verified whether still
-    // needed there - harmless on versions that build the URL correctly.
+    // /messages to this value. Google is unaffected. Not re-verified on the
+    // later pins (7.5.16 -> 7.8.18) - harmless on versions that build the
+    // URL correctly.
     "anthropic": {
       "options": {
         "baseURL": "https://api.anthropic.com/v1",
         "apiKey": "{env:ANTHROPIC_API_KEY}"
       }
-    },
-    // Live for @astra (openai/gpt-6-astra at variant high) and compaction.
-    // Key from the user-scope env var - never in this file. Added 2026-09-09
-    // under the 7.5.16 pin.
-    "openai": { "env": ["OPENAI_API_KEY"] },
-    // Opus agents run here. The only credential is the user-scope Bedrock API
-    // key (AWS_BEARER_TOKEN_BEDROCK) - never in this file.
-    //
-    // region is pinned here rather than left to AWS_REGION on purpose: a region
-    // is not a secret, and an env var only reaches processes started AFTER it
-    // was set. A TUI already running when the var is added inherits a stale
-    // environment and every Bedrock agent dies with "AWS region setting is
-    // missing" - auth passes, region does not. Pinning makes it deterministic
-    // and survives a fresh clone with no extra setup step.
-    //
-    // The eu.* model IDs are EU inference profiles - their destination region
-    // list is fixed by AWS, so requests never leave the EU.
-    "amazon-bedrock": { "options": { "region": "eu-west-1" } }
+    }
+    // openai (astra) and amazon-bedrock (the Opus 5 pipeline agents) left
+    // with those agents on 2026-11-04; git history keeps their blocks.
   },
-  "enabled_providers": ["google", "anthropic", "amazon-bedrock", "openai"],
+  "enabled_providers": ["google", "anthropic"],
 
   "formatter": true,
   "lsp": true,
@@ -76,22 +57,18 @@
   // copy it; pins and licenses in skills/vendor.psd1). Interview skills
   // are gated in permission.skill below.
 
-  // Pin the built-in subagents and title/summary jobs to the cheap model.
-  // Compaction on Flash (2026-09-15): worker sessions are long-lived by
-  // design (plan phase + per-task resumes), so the 40%-threshold compaction
-  // fires routinely and should be fast and cheap; the plan file, commits,
-  // and board carry the durable state, so summary quality is not
-  // load-bearing. cb8c23c chose Astra deliberately for quality - revert is
-  // this one line.
+  // Pin the built-in subagents and title/summary/compaction jobs to the
+  // cheap model. Compaction fires routinely at the 40% threshold below, so
+  // it should be fast and cheap; plan files and commits carry the durable
+  // state.
   "agent": {
     "explore": { "model": "google/gemini-3.8-flash" },
     "general": { "model": "google/gemini-3.8-flash" },
     "title": { "model": "google/gemini-3.8-flash" },
     "summary": { "model": "google/gemini-3.8-flash" },
     "compaction": { "model": "google/gemini-3.8-flash" },
-    // Kilo's deprecated built-in orchestrator: a name-trap next to our
-    // conductor in the agent picker - it hijacked a run once (generic
-    // delegation, no pipeline discipline). Keep it off.
+    // Kilo's deprecated built-in orchestrator: it hijacked a run once with
+    // generic delegation. Keep it off.
     "orchestrator": { "disable": true }
   },
 
@@ -142,17 +119,17 @@
     "lancedb": {}
   },
 
-  // Policy: allow or deny only - never ask. Sessions run unattended.
-  // Last matching rule wins.
+  // Policy: allow or deny only - never ask, so no session stalls on an
+  // approval prompt. Last matching rule wins.
   "permission": {
     "*": "allow",
     "task": { "*": "allow" },
     "doom_loop": "deny",
 
     // Interview skills ask the user and wait on decisions, so only the
-    // attended primaries (quick, boss, astra, argon) re-allow them in their own
+    // attended primaries (quick, boss, argon) re-allow them in their own
     // frontmatter. Kilo ignores the upstream disable-model-invocation flag
-    // (absent from the 7.8.3 binary); a denied skill is withheld from
+    // (absent from the 7.8.18 binary); a denied skill is withheld from
     // <available_skills>, so permission is the only gate.
     "skill": { "*": "allow", "grilling": "deny", "grill-with-docs": "deny" },
 

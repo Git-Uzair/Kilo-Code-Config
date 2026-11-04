@@ -1,4 +1,4 @@
-# Kilo multi-agent pipeline - Windows installer
+# Kilo CLI config - Windows installer
 # PowerShell 5.1 compatible. Idempotent: backs up existing config first.
 param(
     [switch]$Latest  # install newest @kilocode/cli instead of the tested pin
@@ -17,7 +17,7 @@ $pin = '7.8.18'
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
-Write-Host "== Kilo multi-agent pipeline installer ==" -ForegroundColor Cyan
+Write-Host "== Kilo CLI config installer ==" -ForegroundColor Cyan
 
 # 1. Prerequisites
 foreach ($tool in @('node', 'npm')) {
@@ -46,11 +46,22 @@ npm install -g $pkg
 if ($LASTEXITCODE -ne 0) { throw "npm install failed (exit $LASTEXITCODE)" }
 Write-Host ("kilo version: " + (kilo --version))
 
-# 4. Copy config
-New-Item -ItemType Directory -Force (Join-Path $cfgDir 'agents') | Out-Null
+# 4. Copy config. ~/.config/kilo/agents mirrors config/agents: an agent
+# this repo no longer ships is removed (the backup above keeps it), so a
+# retired agent cannot linger in the picker. To keep an agent of your
+# own, add it to config/agents here.
+$agentsDir = Join-Path $cfgDir 'agents'
+New-Item -ItemType Directory -Force $agentsDir | Out-Null
 Copy-Item (Join-Path $repoRoot 'config\kilo.jsonc') $cfgDir -Force
 Copy-Item (Join-Path $repoRoot 'config\instructions.md') $cfgDir -Force
-Copy-Item (Join-Path $repoRoot 'config\agents\*.md') (Join-Path $cfgDir 'agents') -Force
+$agents = @(Get-ChildItem (Join-Path $repoRoot 'config\agents') -Filter *.md)
+foreach ($f in Get-ChildItem $agentsDir -Filter *.md) {
+    if ($agents.Name -notcontains $f.Name) {
+        Remove-Item $f.FullName -Force
+        Write-Host "  removed agent $($f.BaseName) (not shipped by this repo)"
+    }
+}
+Copy-Item (Join-Path $repoRoot 'config\agents\*.md') $agentsDir -Force
 Write-Host "Config installed to $cfgDir"
 
 # 5. Skills: ~/.kilo/skills mirrors skills/ in this repo. Every shipped
@@ -110,22 +121,12 @@ else {
 Write-Host ""
 Write-Host "== Set your API keys (user scope, new terminals pick them up) ==" -ForegroundColor Yellow
 Write-Host '  [Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")'
-Write-Host '  [Environment]::SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK","<your-bedrock-api-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<anthropic-key-for-boss>","User")'
-Write-Host '  [Environment]::SetEnvironmentVariable("OPENAI_API_KEY","<openai-key-for-astra>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY","<optional-firecrawl-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("GEMINI_API_KEY","<optional-key-for-kopipasta-ask>","User")'
+Write-Host "  (ANTHROPIC_API_KEY is needed for @boss only; the Google key runs everything else)"
 Write-Host "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
 Write-Host "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/kilo.jsonc)"
-Write-Host ""
-Write-Host "  Bedrock notes:" -ForegroundColor Yellow
-Write-Host "    - Use a LONG-TERM Bedrock API key; short-term ones expire in <=12h."
-Write-Host "    - Use SetEnvironmentVariable above, not setx: setx truncates at 1024"
-Write-Host "      chars and a silently-truncated key fails auth with no clear cause."
-Write-Host "    - Claude Opus 5 model access must be granted in the Bedrock console."
-Write-Host "    - No AWS_REGION needed: the region is pinned in kilo.jsonc."
-Write-Host "    - ANTHROPIC_API_KEY: needed for @boss (Opus 5.5); otherwise optional -"
-Write-Host "      it is also the Opus rollback path."
 Write-Host ""
 Write-Host "  Already have a kilo TUI open? Restart it." -ForegroundColor Yellow
 Write-Host "  A running process keeps the environment it started with and will not"
@@ -140,5 +141,5 @@ Write-Host "== Agent roster ==" -ForegroundColor Cyan
 # stderr streams to the console as live progress.
 kilo agent list | Select-String -Pattern '^\S+ \((primary|subagent|all)\)' | ForEach-Object { $_.Line }
 Write-Host ""
-Write-Host "Done. Expected custom agents: conductor, quick, worker, planner, coder, opus-coder, verifier, verifier-lite, boss, astra, argon."
-Write-Host "Try:  kilo run --dir <repo> --auto `"your task`""
+Write-Host "Done. Expected custom agents: quick (default), boss, argon, coder."
+Write-Host "Try:  kilo   (opens the TUI in quick; Tab cycles to boss and argon)"
