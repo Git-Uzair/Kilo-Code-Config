@@ -4,17 +4,16 @@ param(
     [switch]$Latest  # install newest @kilocode/cli instead of the tested pin
 )
 $ErrorActionPreference = 'Stop'
-# Pin history: 7.4.22 -> 7.5.16 (2026-09-09) -> 7.7.1 (2026-09-15) -> 7.8.1 (2026-09-26). The
-# 7.7.1 bump is required by the config itself: the worker agent's
-# resume-based PIPELINE, the Kilo Swarm shared board (on by default since
-# 7.7.0), codebase indexing / semantic_search, and wakeup scheduling all
-# need >=7.6/7.7. The 7.4.x-era findings this config encodes (README design
-# notes, the anthropic baseURL pin, the grep/Bun hang, steps-cap and
-# turn-control workarounds) have NOT been re-verified on 7.7.1 - each is
-# harmless on a version that fixed the underlying bug, so all are kept.
-# (interactive_terminal was removed upstream in 7.6.0; its deny lines are
-# inert on 7.7.1 and retained only for older installs.)
-$pin = '7.8.1'
+# Pin history: 7.4.22 -> 7.5.16 (2026-09-09) -> 7.7.1 (2026-09-15) ->
+# 7.8.1 (2026-09-26) -> 7.8.18 (2026-11-04). Re-verified on 7.8.18: the
+# grep tool returns past its 100-match cap (the Windows hang is gone),
+# Claude models get their full output limit (the 32k cap now binds only
+# other providers), and a custom agent's edit/bash rules no longer cap
+# the subagents it starts. The other 7.4.x-era workarounds (the anthropic
+# baseURL pin, the steps-cap and turn-control denies) are NOT re-verified;
+# each is harmless on a version that fixed the underlying bug, so all are
+# kept.
+$pin = '7.8.18'
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
