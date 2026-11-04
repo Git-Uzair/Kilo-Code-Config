@@ -111,7 +111,8 @@ kilo --agent argon
 # one headless run (--auto approves anything not explicitly denied)
 kilo run --dir "C:\path\to\repo" --agent boss --auto "implement X with tests"
 
-# boss at max effort for one run (its default is xhigh)
+# boss at max effort for one run (its default is xhigh);
+# in the TUI, ctrl+t cycles the current model's variant (its effort level)
 kilo run --agent boss --variant max "..."
 
 # sharpen a design by interview first (quick, boss, and argon only)

@@ -5,7 +5,8 @@ model: google/gemini-4-argon
 variant: high
 # variant pins the reasoning effort: low/medium/high on gemini-4-argon (it
 # becomes thinkingConfig with thinkingLevel "high" and includeThoughts
-# true). `kilo run --variant <level>` changes it for one run.
+# true). `kilo run --variant <level>` changes it for one run; ctrl+t
+# cycles it in the TUI.
 # Uses GOOGLE_GENERATIVE_AI_API_KEY (user-scope env var, shared with Flash).
 # No temperature: Gemini 4 and 3.6+ ignore custom temperature/top_p/top_k,
 # return deprecation warning headers, and will return HTTP 400 in a future
