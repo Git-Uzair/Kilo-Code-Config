@@ -229,15 +229,19 @@ it starts as quick and resumes after a restart like any Kilo pane.
 is its name plus Tab. Esc cancels either prompt.
 
 From a terminal outside herdr, an `hk` function does the same for the
-current folder (or one you name), then attaches. Add it to `$PROFILE` on
-Windows or `~/.zshrc` on macOS:
+current folder (or one you name), then attaches. Paste this once to add it
+to your shell profile and load it in the current terminal:
 
 ```powershell
-function hk { node "$env:APPDATA\herdr\kilo.cjs" open @args }
+# Windows (PowerShell)
+New-Item -ItemType Directory -Force (Split-Path $PROFILE) | Out-Null
+Add-Content $PROFILE @('', 'function hk { node "$env:APPDATA\herdr\kilo.cjs" open @args }')
+. $PROFILE
 ```
 
 ```zsh
-hk() { node ~/.config/herdr/kilo.cjs open "$@"; }
+# macOS (zsh)
+printf '\nhk() { node ~/.config/herdr/kilo.cjs open "$@"; }\n' >> ~/.zshrc && . ~/.zshrc
 ```
 
 When herdr is not running, `hk` only starts it, which restores your last
