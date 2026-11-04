@@ -115,6 +115,8 @@ if command -v herdr >/dev/null 2>&1; then
     cp "$HERDR_CFG" "$HERDR_CFG.bak-$STAMP"
   fi
   cp "$REPO_ROOT/config/herdr/config.toml" "$HERDR_CFG"
+  # the config's Kilo keys load kilo.cjs from beside it
+  cp "$REPO_ROOT/config/herdr/kilo.cjs" "$(dirname "$HERDR_CFG")/kilo.cjs"
   echo "Herdr config installed to $HERDR_CFG"
   echo "  (herdr already running? apply it with: herdr server reload-config)"
   herdr integration install kilo || echo "WARN: herdr integration install kilo failed - retry it by hand"

@@ -3,12 +3,38 @@
 # (Windows) or ~/.config/herdr/config.toml (macOS/Linux) when herdr is on
 # PATH, backing up any existing copy first. Edit it here, not there.
 
+# Skip first-run setup: the installer already ran `herdr integration install
+# kilo`, and the `onboarding = false` that setup writes into the installed
+# copy is lost on the next install.
+onboarding = false
+
 [keys]
 # Herdr's default prefix, ctrl+b, is the Kilo TUI's key for backgrounding
 # running subagents (and cursor-left in its prompt). ctrl+q is bound
 # neither in Kilo 7.8.18 nor in PowerShell's PSReadLine. Avoid ctrl+a
 # (Kilo), ctrl+space and ctrl+s (PSReadLine).
 prefix = "ctrl+q"
+
+# Kilo launchers (README "Herdr"): kilo.cjs is installed next to this file.
+# One command string serves both platforms: herdr runs it through cmd.exe
+# on Windows and /bin/sh on macOS, and only Windows sets APPDATA.
+[[keys.command]]
+key = "prefix+a"
+type = "shell"
+command = '''node -e "require((process.env.APPDATA||require('os').homedir()+'/.config')+'/herdr/kilo.cjs')" tab'''
+description = "kilo in a new tab"
+
+[[keys.command]]
+key = "prefix+shift+a"
+type = "popup"
+command = '''node -e "require((process.env.APPDATA||require('os').homedir()+'/.config')+'/herdr/kilo.cjs')" worktree'''
+description = "kilo in a new worktree"
+
+[[keys.command]]
+key = "prefix+f"
+type = "popup"
+command = '''node -e "require((process.env.APPDATA||require('os').homedir()+'/.config')+'/herdr/kilo.cjs')" folder'''
+description = "kilo in another folder"
 
 [ui.toast]
 # Herdr's default is "off". "system" raises an OS notification when a

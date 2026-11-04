@@ -159,6 +159,8 @@ if (Get-Command herdr -ErrorAction SilentlyContinue) {
     }
     New-Item -ItemType Directory -Force $herdrDir | Out-Null
     Copy-Item (Join-Path $repoRoot 'config\herdr\config.toml') $herdrCfg -Force
+    # the config's Kilo keys load kilo.cjs from beside it
+    Copy-Item (Join-Path $repoRoot 'config\herdr\kilo.cjs') (Join-Path $herdrDir 'kilo.cjs') -Force
     Write-Host "Herdr config installed to $herdrCfg"
     Write-Host "  (herdr already running? apply it with: herdr server reload-config)"
     herdr integration install kilo

@@ -7,7 +7,8 @@ do not re-derive.
   (`config/kilo.jsonc`), standing instructions (`config/instructions.md`),
   agent prompts (`config/agents/*.md`), installers, and every skill the
   harness loads (`skills/`). Nothing here executes at runtime except the
-  installers and the maintainer-run `scripts/sync-skills.ps1`.
+  installers, `config/herdr/kilo.cjs` (run by herdr's Kilo keys), and the
+  maintainer-run `scripts/sync-skills.ps1`.
 - `skills/` holds vendored third-party skills (byte copies at the
   commits pinned in `skills/vendor.psd1`) plus the local `codebase-map`.
   Never hand-edit a vendored folder - the next sync overwrites it; adapt
@@ -44,7 +45,8 @@ do not re-derive.
   The installers must never mirror or clean that folder, or a reinstall
   silently breaks herdr's Kilo state reporting and session resume.
   `config/herdr/config.toml` is herdr's own config; the installers copy
-  it only when `herdr` is on PATH.
+  it, with the `kilo.cjs` its keybindings load from beside it, only when
+  `herdr` is on PATH.
 - The MCP servers in `config/kilo.jsonc` (`mcp.firecrawl`,
   `mcp.playwright`) launch installed binaries by name; both installers
   pin their npm packages next to the Kilo pin. Changing a server's

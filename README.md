@@ -198,7 +198,7 @@ on PATH, the installer:
 
 1. copies `config/herdr/config.toml` to `%APPDATA%\herdr\config.toml`
    (`~/.config/herdr/config.toml` on macOS/Linux), backing up any
-   existing file;
+   existing file, and `config/herdr/kilo.cjs` beside it;
 2. runs `herdr integration install kilo`, which adds
    `~/.config/kilo/plugin/herdr-agent-state.js`;
 3. prints `herdr integration status`.
@@ -212,17 +212,41 @@ TUI ctrl+b sends running subagents to the background.
 
 | Key | Action |
 |---|---|
-| `ctrl+q c` | new tab |
+| `ctrl+q a` | Kilo in a new tab of this workspace |
+| `ctrl+q shift+a` | Kilo in a new worktree; asks for a branch |
+| `ctrl+q f` | Kilo in another folder, as a new workspace; asks for a path |
+| `ctrl+q c` | new tab with a shell |
 | `ctrl+q v` / `ctrl+q -` | split right / down |
 | `ctrl+q h`/`j`/`k`/`l` | move between panes |
 | `ctrl+q w` | workspaces |
+| `ctrl+q g` | jump to any agent |
 | `ctrl+q q` | detach, leaving everything running (`herdr` reattaches) |
 | `ctrl+q ?` | help |
 
+The three Kilo keys run `kilo.cjs` and type `kilo` into the new pane, so
+it starts as quick and resumes after a restart like any Kilo pane.
+`ctrl+q f` starts from the parent of the current folder: a sibling repo
+is its name plus Tab. Esc cancels either prompt.
+
+From a terminal outside herdr, an `hk` function does the same for the
+current folder (or one you name), then attaches. Add it to `$PROFILE` on
+Windows or `~/.zshrc` on macOS:
+
+```powershell
+function hk { node "$env:APPDATA\herdr\kilo.cjs" open @args }
+```
+
+```zsh
+hk() { node ~/.config/herdr/kilo.cjs open "$@"; }
+```
+
+When herdr is not running, `hk` only starts it, which restores your last
+session; press `ctrl+q f` there.
+
 **Working with it.**
 
-- One workspace per repo and one tab per task. In a pane, run `kilo`
-  (quick) or `kilo --agent boss` / `kilo --agent argon`.
+- One workspace per repo and one tab per task: `ctrl+q a`, or in a pane
+  run `kilo` (quick) or `kilo --agent boss` / `kilo --agent argon`.
 - Start a new conversation in a new tab, not with `/new` inside a running
   Kilo pane: herdr tracks the first session a pane reports and resumes
   that one.
@@ -230,7 +254,7 @@ TUI ctrl+b sends running subagents to the background.
   panes. On Kilo 7.8.18 a second process can delete a reply the first is
   still writing, and a scheduled wakeup can fire twice. Both are fixed in
   7.8.23, which has not yet reached Kilo's `latest` channel.
-- Parallel work in one repo goes into a worktree. From the repo, run
+- Parallel work in one repo goes into a worktree: `ctrl+q shift+a`, or
   `herdr worktree create --cwd . --branch <name>`. The checkout opens as
   its own workspace under `~/.herdr/worktrees/<repo>/<branch-slug>`.
   Remove it with `herdr worktree remove --workspace <id>` (ids come from
@@ -358,6 +382,7 @@ config/kilo.jsonc          global config: models, providers, permissions, MCP, c
 config/instructions.md     standing instructions injected into every agent
 config/agents/*.md         the four agents (system prompt + permissions each)
 config/herdr/config.toml   Herdr TUI config (optional; installed when herdr is on PATH)
+config/herdr/kilo.cjs      launchers behind herdr's Kilo keys and `hk`
 skills/                    every skill the harness loads (vendored + local codebase-map)
 skills/vendor.psd1         upstream repo, pinned commit, license files per vendored skill
 scripts/sync-skills.ps1    re-vendors skills from vendor.psd1, checks dependency closure
