@@ -330,6 +330,20 @@ the underlying bug.
   - The Bun runtime behind it is fixed too: 7.5.0 builds with Bun 1.4
     and 7.8.7 with Bun 1.4.2. The old advice to restart long TUI sessions
     every few hours no longer applies.
+- **Biome's LSP server (`lsp.biome`) is disabled; Biome formatting stays
+  on.** Verified on 7.8.18 and 7.8.27 (Windows).
+  - After writing and formatting a file, `edit` awaits `LSP.touchFile` ->
+    `client.notify.open`, which sends `didOpen`/`didChange` over stdio with
+    no write timeout (`lsp/client.ts`), while `read` warms the same
+    `StreamMessageWriter` FIFO queue in the background with full file text.
+  - When `biome lsp-proxy --stdio` (or its shared `biome __run_server`
+    daemon across worktrees and GritQL plugins) stops draining its 4 KB
+    Windows stdin pipe, `StreamMessageWriter` blocks forever and wedges
+    every subsequent `edit` in the session without timing out.
+  - `lsp.biome.disabled: true` turns off only that background LSP proxy.
+    `formatter: true` still runs `biome format --write` on every edit,
+    `typescript` (`TsClient`) and `pyright` stay enabled, and project CLI
+    or hook runs of `biome` are unaffected.
 - **Never set `steps:` on any agent.** Kilo enforces the cap by appending
   a trailing assistant message, which Anthropic (Claude 4.6+/5) and
   current Gemini reject at the API. Left unset, the mechanism never fires.

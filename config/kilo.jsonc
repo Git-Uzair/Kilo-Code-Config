@@ -51,7 +51,17 @@
   "enabled_providers": ["google", "anthropic"],
 
   "formatter": true,
-  "lsp": true,
+  // Biome's LSP (`biome lsp-proxy --stdio`) can stop draining its 4 KB
+  // Windows stdin pipe under multi-worktree/GritQL load; Kilo's
+  // `LSP.touchFile` -> `client.notify.open` has no write timeout (verified
+  // on 7.8.18 and 7.8.27), so `edit` wedges forever after writing the file.
+  // `formatter: true` still runs `biome format --write`, and `typescript`
+  // (`TsClient`) + `pyright` stay on.
+  "lsp": {
+    "biome": {
+      "disabled": true
+    }
+  },
 
   // Skills: ~/.kilo/skills mirrors skills/ in this repo (the installers
   // copy it; pins and licenses in skills/vendor.psd1). Interview skills
