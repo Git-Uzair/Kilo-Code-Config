@@ -3,7 +3,7 @@
 
   // Every session starts in quick, the cheap solo lane, unless --agent says
   // otherwise; Tab in the TUI cycles to the other primaries (boss, argon,
-  // Kilo's built-ins). The value must name a visible primary agent: a
+  // carbon, Kilo's built-ins). The value must name a visible primary agent: a
   // missing one throws `default agent "<name>" not found` at session start
   // instead of falling back (agent.ts defaultInfo, kilo 7.8.x). Only an
   // unset key falls back to the built-in "code".
@@ -12,7 +12,7 @@
   // Cheap default. Each agent pins its own model in its frontmatter
   // (~/.config/kilo/agents/*.md): quick and the gemini-coder subagent on
   // google/gemini-3.8-flash, boss on anthropic/claude-opus-5-5, argon on
-  // google/gemini-4-argon.
+  // google/gemini-4-argon, carbon on google/gemini-4-carbon.
   "model": "google/gemini-3.8-flash",
   "small_model": "google/gemini-3.8-flash",
   "instructions": ["~/.config/kilo/instructions.md"],
@@ -130,7 +130,7 @@
     "doom_loop": "deny",
 
     // Interview skills ask the user and wait on decisions, so only the
-    // attended primaries (quick, boss, argon) re-allow them in their own
+    // attended primaries (quick, boss, argon, carbon) re-allow them in their own
     // frontmatter. Kilo ignores the upstream disable-model-invocation flag
     // (absent from the 7.8.18 binary); a denied skill is withheld from
     // <available_skills>, so permission is the only gate.

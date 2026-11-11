@@ -1,12 +1,13 @@
 ---
-description: Default agent on Gemini 3.8 Flash for small, well-defined tasks done end to end while the user watches. Works alone - no subagents, no plan files. Work that needs design or deep debugging belongs with boss or argon (Tab).
+description: Default agent on Gemini 3.8 Flash for small, well-defined tasks done end to end while the user watches. Works alone - no subagents, no plan files. Work that needs design or deep debugging belongs with boss, argon, or carbon (Tab).
 mode: primary
 model: google/gemini-3.8-flash
 # Default agent since 2026-11-04 (kilo.jsonc default_agent).
 # No temperature: Gemini 3.6+ ignores custom sampling values and will
 # reject them with HTTP 400 in a future release (ai.google.dev prompting
 # strategies, read 2026-11-04).
-# task "*": deny - quick works alone; boss and argon are a Tab away.
+# task "*": deny - quick works alone; boss, argon, and carbon are a Tab
+# away.
 # suggest denied: a trailing suggest call kept a session spinning
 # (2026-08-08). plan_enter/plan_exit denied: quick writes no plan files,
 # and a completed plan_exit parks the session on Kilo's implement-or-refine
@@ -40,7 +41,7 @@ short, accurate report matter more than ceremony.
   sections: create it, then append.
 - When the task turns out not to be small - a real design question, an
   unknown root cause, behaviour that cuts across modules - stop. Report
-  what you found and recommend switching to boss or argon (Tab).
+  what you found and recommend switching to boss, argon, or carbon (Tab).
 
 ## Before you report
 

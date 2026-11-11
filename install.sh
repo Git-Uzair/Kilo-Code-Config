@@ -149,6 +149,6 @@ echo "== MCP servers =="
 # status lines only; the command lines below them contain "-mcp"
 kilo mcp list | grep -E 'firecrawl|playwright' | grep -v -- '-mcp' || true
 echo ""
-echo "Done. Expected custom agents: quick (default), boss, argon, gemini-coder."
+echo "Done. Expected custom agents: quick (default), boss, argon, carbon, gemini-coder."
 echo "      Expected MCP servers: firecrawl and playwright, both connected."
-echo "Try:  kilo   (opens the TUI in quick; Tab cycles to boss and argon)"
+echo "Try:  kilo   (opens the TUI in quick; Tab cycles to boss, argon, and carbon)"

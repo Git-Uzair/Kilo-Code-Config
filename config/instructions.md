@@ -102,8 +102,8 @@ default (`npm test`, `python -m pytest -q`, `go test ./...`, `cargo test`,
 
 ## Delegation
 
-This applies when you can dispatch subagents (boss, argon, and Kilo's
-built-in primaries). A subagent starts with no memory of this
+This applies when you can dispatch subagents (boss, argon, carbon, and
+Kilo's built-in primaries). A subagent starts with no memory of this
 conversation, so its brief carries everything it needs: paths, the exact
 question or change, acceptance criteria in the user's words, and the
 command that proves the result.

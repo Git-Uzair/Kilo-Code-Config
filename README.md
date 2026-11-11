@@ -2,7 +2,7 @@
 
 A global configuration for the [Kilo Code CLI](https://kilo.ai) with:
 
-- three agents you talk to;
+- four agents you talk to;
 - one cheap implementer they delegate to;
 - a vendored skill set;
 - an allow/deny permission envelope.
@@ -18,14 +18,16 @@ Pinned to Kilo CLI 7.8.18 and last verified on Windows 10 22H2
 | **quick** *(default)* | gemini-3.8-flash *(Google)* | Small, well-defined tasks done end to end while you watch. Works alone, writes no plan files, commits only when asked. |
 | **boss** | claude-opus-5-5 @ xhigh *(Anthropic)* | The hardest work: design, debugging with an unclear cause, planning, review of risky changes. Delegates errands to Flash. |
 | **argon** | gemini-4-argon @ high *(Google)* | The same role as boss, on Google's frontier model. |
-| **gemini-coder** | gemini-3.8-flash *(Google)* | Subagent for boss and argon: implements one fully specified change test-first, runs tests and lint, reports its diff, and never commits. |
+| **carbon** | gemini-4-carbon @ high *(Google)* | The same role as argon, on Google's deepest-reasoning model: more thinking per turn, slower and more tokens. Gemini API paid tier only. |
+| **gemini-coder** | gemini-3.8-flash *(Google)* | Subagent for boss, argon, and carbon: implements one fully specified change test-first, runs tests and lint, reports its diff, and never commits. |
 | explore, general | gemini-3.8-flash *(Google)* | Kilo's built-in subagents, pinned to Flash, for bulky reading and research. |
 
 **How work flows.**
 
-- Every session starts in quick. Tab cycles to boss and argon (and to
-  Kilo's built-in primaries).
-- boss and argon do the reasoning and the delicate edits themselves.
+- Every session starts in quick. Tab cycles to boss, argon, and carbon
+  (and to Kilo's built-in primaries).
+- boss, argon, and carbon do the reasoning and the delicate edits
+  themselves.
 - They delegate two kinds of work: bulky reading goes to explore or
   general, and edits they can specify completely go to gemini-coder.
 - Writes stay single-threaded: one agent edits the tree at a time, and
@@ -65,7 +67,7 @@ and publishing.
   repo):
   - `GOOGLE_GENERATIVE_AI_API_KEY`, from
     [Google AI Studio](https://aistudio.google.com). It runs quick, argon,
-    gemini-coder, the built-in subagents, compaction, and the
+    carbon (paid tier), gemini-coder, the built-in subagents, compaction, and the
     codebase-indexing embeddings.
   - `ANTHROPIC_API_KEY` - powers boss. Everything else runs without it.
   - `FIRECRAWL_API_KEY` *(optional)* - Firecrawl MCP for web search and
@@ -129,19 +131,20 @@ The installer:
 Then verify, in a new terminal:
 
 ```powershell
-kilo agent list   # expect quick, boss, argon, gemini-coder (plus Kilo's built-ins)
+kilo agent list   # expect quick, boss, argon, carbon, gemini-coder (plus Kilo's built-ins)
 kilo mcp list     # expect firecrawl and playwright: connected
 ```
 
 ## Usage
 
 ```powershell
-# interactive TUI, starting in quick; Tab cycles to boss and argon
+# interactive TUI, starting in quick; Tab cycles to boss, argon, and carbon
 kilo
 
 # start in a heavyweight
 kilo --agent boss
 kilo --agent argon
+kilo --agent carbon
 
 # one headless run (--auto approves anything not explicitly denied)
 kilo run --dir "C:\path\to\repo" --agent boss --auto "implement X with tests"
@@ -150,8 +153,8 @@ kilo run --dir "C:\path\to\repo" --agent boss --auto "implement X with tests"
 # in the TUI, ctrl+t cycles the current model's variant (its effort level)
 kilo run --agent boss --variant max "..."
 
-# sharpen a design by interview first (quick, boss, and argon only)
-#   /grill-with-docs   in quick (cheap) or boss / argon (deep)
+# sharpen a design by interview first (quick, boss, argon, and carbon only)
+#   /grill-with-docs   in quick (cheap) or boss / argon / carbon (deep)
 
 # after a session: what should change in the harness itself?
 #   /retro
@@ -160,7 +163,7 @@ kilo run --agent boss --variant max "..."
 #   /caveman           (/ultracave or /megacave compress harder)
 ```
 
-When boss or argon plan, the plan goes to
+When boss, argon, or carbon plan, the plan goes to
 `docs/plans/<date>-<slug>.md` in the target repo. It ends with
 `PLAN COMPLETE`, and task statuses are updated in the file as work
 proceeds, so a run survives restarts and compaction.
@@ -250,7 +253,8 @@ session; press `ctrl+q f` there.
 **Working with it.**
 
 - One workspace per repo and one tab per task: `ctrl+q a`, or in a pane
-  run `kilo` (quick) or `kilo --agent boss` / `kilo --agent argon`.
+  run `kilo` (quick) or `kilo --agent boss` / `kilo --agent argon` /
+  `kilo --agent carbon`.
 - Start a new conversation in a new tab, not with `/new` inside a running
   Kilo pane: herdr tracks the first session a pane reports and resumes
   that one.
@@ -341,7 +345,7 @@ the underlying bug.
   and `description` from skill frontmatter; the 7.8.18 binary has no
   `disable-model-invocation`.
   - `kilo.jsonc` denies `grilling` and `grill-with-docs` globally.
-  - quick, boss, and argon re-allow them, because only an attended
+  - quick, boss, argon, and carbon re-allow them, because only an attended
     session has a user to interview.
 - **Kilo's deprecated built-in `orchestrator` is disabled.** It once
   hijacked a run with generic delegation.
@@ -384,7 +388,7 @@ the underlying bug.
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
 config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the four agents (system prompt + permissions each)
+config/agents/*.md         the five agents (system prompt + permissions each)
 config/herdr/config.toml   Herdr TUI config (optional; installed when herdr is on PATH)
 config/herdr/kilo.cjs      launchers behind herdr's Kilo keys and `hk`
 skills/                    every skill the harness loads (vendored + local codebase-map)

@@ -211,6 +211,6 @@ kilo mcp list | ForEach-Object { $_ -replace '\x1b\[[0-9;]*m', '' } |
     Select-String -Pattern '\b(firecrawl|playwright)\s+(\w+)' |
     ForEach-Object { "  $($_.Matches[0].Groups[1].Value): $($_.Matches[0].Groups[2].Value)" }
 Write-Host ""
-Write-Host "Done. Expected custom agents: quick (default), boss, argon, gemini-coder."
+Write-Host "Done. Expected custom agents: quick (default), boss, argon, carbon, gemini-coder."
 Write-Host "      Expected MCP servers: firecrawl and playwright, both connected."
-Write-Host "Try:  kilo   (opens the TUI in quick; Tab cycles to boss and argon)"
+Write-Host "Try:  kilo   (opens the TUI in quick; Tab cycles to boss, argon, and carbon)"
