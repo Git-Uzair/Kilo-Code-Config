@@ -3,15 +3,13 @@
 # Idempotent: backs up existing config first.
 set -euo pipefail
 # Pin history: 7.4.22 -> 7.5.16 (2026-09-09) -> 7.7.1 (2026-09-15) ->
-# 7.8.1 (2026-09-26) -> 7.8.18 (2026-11-04). Re-verified on 7.8.18: the
-# grep tool returns past its 100-match cap (the Windows hang is gone),
-# Claude models get their full output limit (the 32k cap now binds only
-# other providers), and a custom agent's edit/bash rules no longer cap
-# the subagents it starts. The other 7.4.x-era workarounds (the anthropic
-# baseURL pin, the steps-cap and turn-control denies) are NOT re-verified;
-# each is harmless on a version that fixed the underlying bug, so all are
-# kept.
-PIN="7.8.18"
+# 7.8.1 (2026-09-26) -> 7.8.18 (2026-11-04) -> 7.8.27 (2026-11-19).
+# Re-verified on 7.8.27: TUI `/models` choices persist for agents without
+# `model:` (`packages/tui/src/context/local.tsx`), Anthropic uses `/v1`
+# natively without a `baseURL` override, `google/gemini-4-hydrogen` at
+# `variant: high` resolves cleanly on custom and built-in agents, and the
+# 7.8.20 compaction-threshold and 7.8.23 multi-pane/wakeup fixes are live.
+PIN="7.8.27"
 # MCP servers that kilo.jsonc launches by name, pinned beside the CLI
 # (see install.ps1)
 PKGS=("@kilocode/cli@${PIN}" "firecrawl-mcp@3.36.1" "@playwright/mcp@0.0.84")
@@ -129,10 +127,11 @@ fi
 echo ""
 echo "== Set your API keys (add to your shell profile) =="
 echo '  export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"'
-echo '  export ANTHROPIC_API_KEY="<anthropic-key-for-boss>"'
+echo '  export ANTHROPIC_API_KEY="<optional-anthropic-key>"'
+echo '  export OPENAI_API_KEY="<optional-openai-key>"'
 echo '  export FIRECRAWL_API_KEY="<optional-firecrawl-key>"'
 echo '  export GEMINI_API_KEY="<optional-key-for-kopipasta-ask>"'
-echo "  (ANTHROPIC_API_KEY is needed for @boss only; the Google key runs everything else)"
+echo "  (Google key runs the Hydrogen defaults; any provider key or 'kilo auth' unlocks its models in /models for max)"
 echo "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
 echo "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/kilo.jsonc)"
 echo ""
@@ -149,6 +148,6 @@ echo "== MCP servers =="
 # status lines only; the command lines below them contain "-mcp"
 kilo mcp list | grep -E 'firecrawl|playwright' | grep -v -- '-mcp' || true
 echo ""
-echo "Done. Expected custom agents: quick (default), boss, argon, carbon, gemini-coder."
+echo "Done. Expected custom agents: max (default), quick, coder."
 echo "      Expected MCP servers: firecrawl and playwright, both connected."
-echo "Try:  kilo   (opens the TUI in quick; Tab cycles to boss, argon, and carbon)"
+echo "Try:  kilo   (opens the TUI in max; /models picks any frontier model, Tab switches to quick)"

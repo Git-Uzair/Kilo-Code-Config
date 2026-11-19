@@ -1,52 +1,61 @@
 # Kilo Code CLI config
 
-A global configuration for the [Kilo Code CLI](https://kilo.ai) with:
+A model-agnostic global configuration for the [Kilo Code CLI](https://kilo.ai)
+with:
 
-- four agents you talk to;
-- one cheap implementer they delegate to;
+- two agents you talk to (`max` by default, `quick` for solo fast work);
+- one subagent implementer (`coder`) `max` delegates specified edits to;
 - a vendored skill set;
 - an allow/deny permission envelope.
 
 You bring your own API keys; no Kilo account or gateway is required.
-Pinned to Kilo CLI 7.8.18 and last verified on Windows 10 22H2
-(2026-11-04). The config itself is OS-agnostic.
+Pinned to Kilo CLI 7.8.27 and verified on Windows (2026-11-19). The config
+itself is OS-agnostic.
 
 ## Agents
 
 | Agent | Model | Role |
 |---|---|---|
-| **quick** *(default)* | gemini-3.8-flash *(Google)* | Small, well-defined tasks done end to end while you watch. Works alone, writes no plan files, commits only when asked. |
-| **boss** | claude-opus-5-5 @ xhigh *(Anthropic)* | The hardest work: design, debugging with an unclear cause, planning, review of risky changes. Delegates errands to Flash. |
-| **argon** | gemini-4-argon @ high *(Google)* | The same role as boss, on Google's frontier model. |
-| **carbon** | gemini-4-carbon @ high *(Google)* | The same role as argon, on Google's deepest-reasoning model: more thinking per turn, slower and more tokens. Gemini API paid tier only. |
-| **gemini-coder** | gemini-3.8-flash *(Google)* | Subagent for boss, argon, and carbon: implements one fully specified change test-first, runs tests and lint, reports its diff, and never commits. |
-| explore, general | gemini-3.8-flash *(Google)* | Kilo's built-in subagents, pinned to Flash, for bulky reading and research. |
+| **max** *(default)* | Any frontier model via `/models` (`ctrl+x m`); initial fallback `gemini-4-hydrogen` | End-to-end engineering, architecture, non-obvious debugging, planning, research, and review. Model-agnostic prompt; `/models` and `ctrl+t` selections persist across restarts. |
+| **quick** | `gemini-4-hydrogen` @ `high` *(Google)* | Small, well-defined tasks done end to end while you watch. Works alone, writes no plan files, commits only when asked. |
+| **coder** | `gemini-4-hydrogen` @ `high` *(Google)* | Subagent for `max`: implements one fully specified change test-first, runs tests and lint, reports its diff, and never commits. |
+| `explore`, `general` | `gemini-4-hydrogen` @ `high` *(Google)* | Kilo's built-in subagents, configured to Hydrogen at `high` thinking, for bulky reading, research, and fresh-context reviews. |
+| `title`, `summary`, `compaction` | `gemini-4-hydrogen` @ `high` *(Google)* | Kilo's hidden session-utility agents, configured to Hydrogen at `high` thinking. |
 
 **How work flows.**
 
-- Every session starts in quick. Tab cycles to boss, argon, and carbon
-  (and to Kilo's built-in primaries).
-- boss, argon, and carbon do the reasoning and the delicate edits
-  themselves.
-- They delegate two kinds of work: bulky reading goes to explore or
-  general, and edits they can specify completely go to gemini-coder.
+- Every session starts in `max`. Pick any frontier model once with `/models`
+  (`ctrl+x m`) and cycle reasoning effort with `ctrl+t`; Kilo saves both
+  choices across tabs, workspaces, and restarts. Press `Tab` when you want
+  `quick` (or Kilo's built-in primaries).
+- Every prompt and standing instruction is model-agnostic: switching `max`
+  (or `quick` / `coder`) between Anthropic, Google, OpenAI, OpenRouter,
+  Bedrock, or a local model never conflicts with the instructions.
+- `max` scales ceremony to the task: small changes happen directly in a few
+  tool calls; larger or riskier work maps callers first, establishes a
+  check, and writes a plan in `docs/plans/` when durable tracking helps.
+- `max` owns reasoning, delicate edits, and git history. It delegates bulky
+  read-only reconnaissance to `explore` or `general`, fully specified edits
+  to `coder`, and fresh-context diff reviews (`ponytail-review`) to
+  `general`.
 - Writes stay single-threaded: one agent edits the tree at a time, and
-  the delegating agent reviews every delegated diff before committing it.
-- For a risky change they can ask general for a fresh-context review
-  using the ponytail-review skill.
+  `max` reviews every delegated `git diff` before committing or starting
+  the next edit.
 
 **Why this shape.** Until 2026-11-04 this repo ran an eleven-agent
-pipeline: a Flash conductor routed every request through planners,
-coders, and verifiers. It was replaced on evidence.
+pipeline, then four model-named primaries (`quick`, `boss`, `argon`,
+`carbon`). Two findings shaped the current setup:
 
 - Cognition (2026-04-22, cognition.com/blog/multi-agents-working) found
   that multi-agent systems "work best today when writes stay
   single-threaded and the additional agents contribute intelligence
-  rather than actions".
-- The same post found that when a weaker model decides when to escalate,
-  "the quality ceiling was set by the primary".
-
-So the strong models now sit in front, and the cheap ones run errands.
+  rather than actions", and that when a weaker model decides when to
+  escalate, "the quality ceiling was set by the primary". Putting `max` in
+  front removes that ceiling while keeping Hydrogen subagents for bounded
+  errands.
+- Frontier models change faster than workflow rules. Keeping one model-free
+  primary (`max`) without a hardcoded `model:` lets `/models` switch SOTA
+  models at runtime without maintaining duplicate agent files.
 
 **Permissions are allow/deny only - zero "ask" rules - so sessions never
 stall on approval prompts.** A deny-list blocks destructive commands
@@ -66,10 +75,15 @@ and publishing.
 - API keys, set as user-scope environment variables (never stored in this
   repo):
   - `GOOGLE_GENERATIVE_AI_API_KEY`, from
-    [Google AI Studio](https://aistudio.google.com). It runs quick, argon,
-    carbon (paid tier), gemini-coder, the built-in subagents, compaction, and the
-    codebase-indexing embeddings.
-  - `ANTHROPIC_API_KEY` - powers boss. Everything else runs without it.
+    [Google AI Studio](https://aistudio.google.com). Runs the Hydrogen
+    defaults (`quick`, `coder`, `explore`, `general`, `title`, `summary`,
+    `compaction`, and `max`'s initial fallback before you pick another
+    model in `/models`), plus codebase-indexing embeddings.
+  - Any frontier provider credentials *(optional, auto-detected)* -
+    `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
+    `XAI_API_KEY`, `DEEPSEEK_API_KEY`, AWS Bedrock credentials, `kilo auth`,
+    or a custom `provider` block in `kilo.jsonc`. Every configured provider
+    appears automatically in `/models` for `max`.
   - `FIRECRAWL_API_KEY` *(optional)* - Firecrawl MCP for web search and
     scraping. Without it, remove the `mcp.firecrawl` block from
     `config/kilo.jsonc`.
@@ -81,14 +95,16 @@ commands too):
 ```powershell
 # Windows (user scope)
 [Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")
-[Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<anthropic-key-for-boss>","User")
+[Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<optional-anthropic-key>","User")
+[Environment]::SetEnvironmentVariable("OPENAI_API_KEY","<optional-openai-key>","User")
 [Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY","<optional-firecrawl-key>","User")
 ```
 
 ```bash
 # macOS / Linux (add to your shell profile)
 export GOOGLE_GENERATIVE_AI_API_KEY="<your-google-key>"
-export ANTHROPIC_API_KEY="<anthropic-key-for-boss>"
+export ANTHROPIC_API_KEY="<optional-anthropic-key>"
+export OPENAI_API_KEY="<optional-openai-key>"
 export FIRECRAWL_API_KEY="<optional-firecrawl-key>"
 ```
 
@@ -115,7 +131,7 @@ The installer:
 1. checks for Node.js 22+ and backs up any existing `~/.config/kilo`
    and `~/.kilo`;
 2. installs, globally via npm and at pinned versions, the Kilo CLI
-   (`@kilocode/cli@7.8.18`) and the two MCP servers the config launches
+   (`@kilocode/cli@7.8.27`) and the two MCP servers the config launches
    (`firecrawl-mcp@3.36.1`, `@playwright/mcp@0.0.84`), then checks for
    Google Chrome;
 3. copies this config, mirroring `config/agents/` into
@@ -131,30 +147,27 @@ The installer:
 Then verify, in a new terminal:
 
 ```powershell
-kilo agent list   # expect quick, boss, argon, carbon, gemini-coder (plus Kilo's built-ins)
+kilo agent list   # expect max, quick, coder (plus Kilo's built-ins)
 kilo mcp list     # expect firecrawl and playwright: connected
 ```
 
 ## Usage
 
 ```powershell
-# interactive TUI, starting in quick; Tab cycles to boss, argon, and carbon
+# interactive TUI, starting in max
+#   /models (or ctrl+x m) picks any configured frontier model (persisted)
+#   ctrl+t cycles the current model's reasoning effort (persisted per model)
+#   Tab switches to quick (and Kilo's built-in primaries)
 kilo
 
-# start in a heavyweight
-kilo --agent boss
-kilo --agent argon
-kilo --agent carbon
+# start directly in quick
+kilo --agent quick
 
-# one headless run (--auto approves anything not explicitly denied)
-kilo run --dir "C:\path\to\repo" --agent boss --auto "implement X with tests"
+# one headless run on a specific model and effort (--auto approves anything not denied)
+kilo run --dir "C:\path\to\repo" --agent max -m anthropic/claude-opus-5-5 --variant xhigh --auto "implement X with tests"
 
-# boss at max effort for one run (its default is xhigh);
-# in the TUI, ctrl+t cycles the current model's variant (its effort level)
-kilo run --agent boss --variant max "..."
-
-# sharpen a design by interview first (quick, boss, argon, and carbon only)
-#   /grill-with-docs   in quick (cheap) or boss / argon / carbon (deep)
+# sharpen a design by interview first (max and quick only)
+#   /grill-with-docs
 
 # after a session: what should change in the harness itself?
 #   /retro
@@ -163,7 +176,7 @@ kilo run --agent boss --variant max "..."
 #   /caveman           (/ultracave or /megacave compress harder)
 ```
 
-When boss, argon, or carbon plan, the plan goes to
+When `max` plans multi-task work, the plan goes to
 `docs/plans/<date>-<slug>.md` in the target repo. It ends with
 `PLAN COMPLETE`, and task statuses are updated in the file as work
 proceeds, so a run survives restarts and compaction.
@@ -187,7 +200,7 @@ was written) is optional: a terminal workspace manager for coding agents.
   you, and which have finished.
 - After a reboot it restores the layout and reopens each Kilo
   conversation with `kilo --session <id>`. Kilo reopens a conversation in
-  the agent it last used, so a boss pane normally returns as boss.
+  the agent it last used.
 
 **Install.**
 
@@ -227,9 +240,10 @@ TUI ctrl+b sends running subagents to the background.
 | `ctrl+q ?` | help |
 
 The three Kilo keys run `kilo.cjs` and type `kilo` into the new pane, so
-it starts as quick and resumes after a restart like any Kilo pane.
-`ctrl+q f` starts from the parent of the current folder: a sibling repo
-is its name plus Tab. Esc cancels either prompt.
+it starts in `max` (using your last `/models` pick) and resumes after a
+restart like any Kilo pane. `ctrl+q f` starts from the parent of the
+current folder: a sibling repo is its name plus Tab. Esc cancels either
+prompt.
 
 From a terminal outside herdr, an `hk` function does the same for the
 current folder (or one you name), then attaches. Paste this once to add it
@@ -253,15 +267,12 @@ session; press `ctrl+q f` there.
 **Working with it.**
 
 - One workspace per repo and one tab per task: `ctrl+q a`, or in a pane
-  run `kilo` (quick) or `kilo --agent boss` / `kilo --agent argon` /
-  `kilo --agent carbon`.
+  run `kilo` (`max`) or `kilo --agent quick`.
 - Start a new conversation in a new tab, not with `/new` inside a running
   Kilo pane: herdr tracks the first session a pane reports and resumes
   that one.
 - Keep one writer per checkout, and never open the same session in two
-  panes. On Kilo 7.8.18 a second process can delete a reply the first is
-  still writing, and a scheduled wakeup can fire twice. Both are fixed in
-  7.8.23, which has not yet reached Kilo's `latest` channel.
+  panes.
 - Parallel work in one repo goes into a worktree: `ctrl+q shift+a`, or
   `herdr worktree create --cwd . --branch <name>`. The checkout opens as
   its own workspace under `~/.herdr/worktrees/<repo>/<branch-slug>`.
@@ -275,7 +286,7 @@ session; press `ctrl+q f` there.
 - Panes are started by the herdr server, so an API key set after the
   server started may not reach new panes. Run `herdr server stop`, then
   `herdr`: the layout returns and Kilo conversations resume.
-- Every pane running boss is a separate Opus session, and they bill in
+- Every pane running `max` is a separate session, and active turns bill in
   parallel.
 
 **Not used here.**
@@ -287,98 +298,79 @@ session; press `ctrl+q f` there.
 
 ## Design notes
 
-Each of these cost a broken run to learn, and the config encodes the fix.
-Findings re-verified on 7.8.18 (2026-11-04) say so; the rest date from
-kilo 7.4.x and are kept because each is harmless on a version that fixed
-the underlying bug.
+Each of these cost a broken run or source check to learn, and the config
+encodes the fix. Findings verified on 7.8.27 (2026-11-19) say so.
 
+- **`max` omits `model:` so `/models` choices persist.** Verified in
+  `packages/tui/src/context/local.tsx` at `v7.8.27`: `apply(a.name, model,
+  !a.model)` writes a `/models` (`ctrl+x m`) pick to
+  `~/.local/share/kilo/storage/model.json` only when `a.model` is unset.
+  Setting `model:` in `config/agents/max.md` turns TUI switches into
+  one-window overrides that reset on every new tab or restart. Leaving
+  `model:` and `variant:` unset lets `/models` persist the chosen model and
+  `ctrl+t` persist reasoning effort per `provider/model`, falling back to
+  top-level `model` in `kilo.jsonc` before any pick is saved.
+- **`disabled_providers: ["kilo"]` instead of `enabled_providers`.**
+  Verified on 7.8.27. `enabled_providers` is a strict allowlist that hides
+  every new API key, `kilo auth` login, or custom `provider` block until
+  you also edit the array. `disabled_providers: ["kilo"]` hides only the
+  unauthenticated Kilo Gateway while auto-enabling every BYOK, cloud, or
+  local provider whose credentials are present.
 - **`default_agent` must name a real, visible primary agent.**
-  Re-verified on 7.8.18. A missing agent aborts every run with
-  `default agent "<name>" not found`; Kilo does not fall back. Only an
-  unset key falls back to the built-in `code`. Rename or remove the
-  default agent and `default_agent` must change in the same commit.
+  Verified on 7.8.27 (`packages/opencode/src/agent/agent.ts`). A missing
+  agent aborts every run with `default agent "<name>" not found`; Kilo
+  does not fall back. Only an unset key falls back to the built-in `code`.
 - **Subagents run under their own rules, not their caller's.** Changed in
-  7.8.13 (changelog) and read in `kilocode/tool/task.ts` at the v7.8.18
-  tag.
-  - A custom agent's `edit` rules and broad `bash` denies no longer cap
-    the subagents it starts. Each subagent gets the global rules plus its
-    own frontmatter, appended last so its rules win.
+  7.8.13 and verified through 7.8.27.
+  - Each subagent gets the global rules plus its own frontmatter, appended
+    last so its rules win.
   - Kilo itself denies `question`, `suggest`, and `task` in every
     subagent: subagents cannot ask the user or spawn subagents of their
     own.
-  - That is why gemini-coder carries its own git denies (commit, push,
-    reset, checkout, restore, stash, and other state-changing commands).
-    It shares the caller's working tree, and those commands could destroy
-    the caller's uncommitted work.
-- **The 32k output cap now binds only non-Claude models.** Since 7.8.2,
-  Claude on first-party routes requests its full output limit; every
-  other model keeps the 32,000-token cap per response, and the overflow
-  is silently truncated. The Gemini agents therefore write large files in
-  sections. boss does not need to.
-- **No temperature on Gemini agents.** Google's prompting guide (read
-  2026-11-04) says Gemini 4 and 3.6+ ignore custom `temperature`,
-  `top_p`, and `top_k`, return deprecation warning headers, and will
-  return HTTP 400 in a future release. The old `temperature: 0.1` lines
-  are gone.
-- **The grep hang is fixed.** Re-verified on 7.8.18.
-  - Old behaviour (kilo 7.4.20, Windows): a grep with more than 100
-    matches stayed `"running"` forever and wedged the session.
-  - On 7.8.18 the same test against a 300-match file returns
-    `Found 100 matches (more matches available)` and exits normally.
-  - The narrow-pattern workaround has been removed from the
-    instructions.
-  - The Bun runtime behind it is fixed too: 7.5.0 builds with Bun 1.4
-    and 7.8.7 with Bun 1.4.2. The old advice to restart long TUI sessions
-    every few hours no longer applies.
+  - That is why `coder` carries its own git denies (`commit`, `push`,
+    `reset`, `checkout`, `restore`, `stash`, and other state-changing
+    commands). It shares the caller's working tree, and those commands
+    could destroy the caller's uncommitted work.
+- **Single model-agnostic 32k output rule.** Since 7.8.2, Claude on
+  first-party routes requests its full output limit, while
+  `OUTPUT_TOKEN_MAX = 32_000` (`packages/opencode/src/provider/transform.ts`
+  at `v7.8.27`) still caps single-step output on other providers and
+  silently truncates overflow. `config/instructions.md` states one
+  provider-neutral rule: write large files or plans in sections.
+- **No custom `temperature` on agents.** Gemini 4 (`gemini-4-hydrogen`,
+  `gemini-4-argon`, `gemini-4-carbon`) and modern reasoning models ignore
+  or reject custom `temperature`, `top_p`, and `top_k`.
 - **Never set `steps:` on any agent.** Kilo enforces the cap by appending
-  a trailing assistant message, which Anthropic (Claude 4.6+/5) and
-  current Gemini reject at the API. Left unset, the mechanism never fires.
-  Not re-verified on 7.8.18.
+  a trailing assistant message, which Anthropic (Claude 4.6+/5.x) and
+  Gemini reject at the API. Left unset, the mechanism never fires.
 - **The turn-control tools `suggest`, `plan_enter`, and `plan_exit` are
-  denied on every custom agent.**
-  - Plans are files in `docs/plans/`, not Kilo's plan mode.
-  - A trailing turn-control call once left sessions spinning forever:
-    `suggest` after a final report (2026-08-08), and `plan_exit` parking
-    a session on a follow-up question no one could answer (2026-08-12,
-    2026-08-21).
+  denied on every custom agent.** Plans are files in `docs/plans/`, not
+  Kilo's plan mode, and trailing turn-control calls once left sessions
+  spinning or parked on an unanswerable follow-up.
 - **Interview skills are gated by permission.** Kilo reads only `name`
-  and `description` from skill frontmatter; the 7.8.18 binary has no
-  `disable-model-invocation`.
-  - `kilo.jsonc` denies `grilling` and `grill-with-docs` globally.
-  - quick, boss, argon, and carbon re-allow them, because only an attended
-    session has a user to interview.
-- **Kilo's deprecated built-in `orchestrator` is disabled.** It once
-  hijacked a run with generic delegation.
-- **Kilo 7.4.23 dropped `/v1` from the Anthropic API URL.**
-  - Requests went to `api.anthropic.com/messages`, which does not exist,
-    so boss failed with a bare `Not Found` and no error body naming the
-    cause.
-  - `kilo.db`'s `AI_APICallError` records carry the bad URL, and the same
-    request replayed at `/v1/messages` returns 200.
-  - The fix is the pinned `baseURL: "https://api.anthropic.com/v1"` (the
-    SDK appends `/messages`). It is harmless on versions that build the
-    URL correctly. Not re-verified on 7.8.18.
+  and `description` from skill frontmatter and ignores
+  `disable-model-invocation`. `kilo.jsonc` denies `grilling` and
+  `grill-with-docs` globally; `max` and `quick` re-allow them because only
+  an attended session has a user to interview.
+- **Kilo's deprecated built-in `orchestrator` is disabled.** `max`
+  dispatches `explore`, `general`, and `coder` directly.
 - **The MCP servers are installed, not fetched per session.** The
   installers put `firecrawl-mcp` and `@playwright/mcp` on PATH at pinned
-  versions. `kilo.jsonc` launches `firecrawl-mcp` and
-  `playwright-mcp --browser chrome` by name, where it used to run
-  `npx -y ...` (with Playwright at `@latest`) as each session started.
-  Verified on 7.8.18: `kilo mcp list` shows both connected when the
-  binaries are on PATH and both failed when they are not.
+  versions, and `kilo.jsonc` launches `firecrawl-mcp` and
+  `playwright-mcp --browser chrome` directly by binary name.
 - **`web_search: true` is not provider-native.** `websearch` routes to
   Parallel through Kilo's built-in mcp-parallel transport, independent of
   the model provider. It needs neither a Kilo account nor a search API
   key of yours.
 - **Codebase indexing ships configured but disabled.** The `indexing`
-  block in `config/kilo.jsonc` uses gemini-embedding-001 and embedded
-  LanceDB, with the key via `{env:GOOGLE_GENERATIVE_AI_API_KEY}`.
-  - Turn it on by flipping `enabled` to true (indexes every workspace),
-    or per project with `/indexing` in the TUI.
-  - The `semantic_search` tool then appears in every agent's roster.
-    Agents use it first when it is present and skip it when it is not.
-- **Compaction runs at 40% of the context window, on Flash.** The 7.8.20
-  release candidate fixes auto-compaction starting well before the
-  configured threshold; on the 7.8.18 pin it can fire early.
+  block in `config/kilo.jsonc` uses `gemini-embedding-001` and embedded
+  LanceDB via `{env:GOOGLE_GENERATIVE_AI_API_KEY}`. Flip `enabled` to
+  `true` globally or per project (`.kilo/kilo.jsonc` or `/indexing`) to
+  expose `semantic_search`.
+- **Compaction runs at 40% of the context window on Hydrogen @ `high`.**
+  Gemini 4 Hydrogen shares its 1,048,576-token window across input,
+  thinking, and output; compacting at 40% leaves ample headroom, and
+  7.8.27 includes the 7.8.20 fix for early compaction triggers.
 - **The installers mirror agents and skills.** Deleting a file in
   `config/agents/` or `skills/` removes it from the live config on the
   next install, so retired agents cannot linger in the picker.
@@ -387,8 +379,8 @@ the underlying bug.
 
 ```
 config/kilo.jsonc          global config: models, providers, permissions, MCP, compaction
-config/instructions.md     standing instructions injected into every agent
-config/agents/*.md         the five agents (system prompt + permissions each)
+config/instructions.md     model-agnostic standing instructions injected into every agent
+config/agents/*.md         the three custom agents: max, quick, coder
 config/herdr/config.toml   Herdr TUI config (optional; installed when herdr is on PATH)
 config/herdr/kilo.cjs      launchers behind herdr's Kilo keys and `hk`
 skills/                    every skill the harness loads (vendored + local codebase-map)
@@ -406,7 +398,7 @@ pre-install backup keeps it). To keep a skill of your own, add it to
 `skills/`.
 
 Third-party skills are vendored byte-for-byte at the commits pinned in
-`skills/vendor.psd1` (last refreshed to upstream HEAD on 2026-11-04).
+`skills/vendor.psd1` (verified identical to upstream HEAD on 2026-11-19).
 Each folder carries its upstream license.
 
 - [mattpocock/skills](https://github.com/mattpocock/skills) (MIT):

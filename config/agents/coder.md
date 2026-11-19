@@ -1,13 +1,15 @@
 ---
-description: Cheap implementer on Gemini 3.8 Flash for one fully specified change. Brief it with the files, the exact edit or behaviour, the test to add, and the command that proves it; it implements, runs tests and lint, and reports its diff. It never commits - the caller reviews the diff and commits. Not for design, open-ended exploration, or decisions the brief does not settle.
+description: Subagent implementer for one fully specified change. Brief it with the files, the exact edit or behaviour, the test to add, and the command that proves it; it implements, runs tests and lint, and reports its diff. It never commits - the caller reviews the diff and commits. Not for design, open-ended exploration, or decisions the brief does not settle.
 mode: subagent
-model: google/gemini-3.8-flash
-# No temperature: Gemini 3.6+ ignores custom sampling values and will
-# reject them with HTTP 400 in a future release (ai.google.dev, prompting
-# strategies, read 2026-11-04).
-# No steps cap: hitting it makes Kilo append a trailing model-turn wrap-up,
-# which Gemini rejects ("Requests ending with a model turn are not
-# supported") - verified live 2026-08-08; not re-tested on 7.8.18.
+model: google/gemini-4-hydrogen
+variant: high
+# Configured to Gemini 4 Hydrogen at high thinking by default; prompt is
+# model-agnostic so changing `model:` or `subagent_model` needs no prompt
+# edits.
+# No temperature: Gemini 4 and modern reasoning models ignore or reject
+# custom sampling parameters.
+# No steps cap: Kilo's step-cap wrap-up appends a trailing assistant turn
+# that Anthropic and Gemini APIs reject (kilocode #8260 class).
 # Kilo itself denies question, suggest, and task in every subagent
 # (KiloTask.permissions); plan_enter/plan_exit stay denied here because a
 # completed plan_exit parks a child session on a follow-up no one answers.
@@ -48,8 +50,6 @@ contract.
   discarding changes to it. It reviews your diff and commits.
 - Call only functions and APIs whose definition or docs you have opened.
   If you cannot find one, say so in the report.
-- Each response is capped at 32,000 output tokens. Write a large file in
-  sections: create it, then append.
 
 ## Steps
 

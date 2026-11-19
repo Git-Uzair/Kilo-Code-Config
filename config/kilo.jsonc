@@ -1,20 +1,23 @@
 {
   "$schema": "https://app.kilo.ai/config.json",
 
-  // Every session starts in quick, the cheap solo lane, unless --agent says
-  // otherwise; Tab in the TUI cycles to the other primaries (boss, argon,
-  // carbon, Kilo's built-ins). The value must name a visible primary agent: a
+  // Every session starts in max, the model-agnostic frontier agent, unless
+  // --agent says otherwise; Tab in the TUI cycles to quick and Kilo's
+  // built-in primaries. The value must name a visible primary agent: a
   // missing one throws `default agent "<name>" not found` at session start
   // instead of falling back (agent.ts defaultInfo, kilo 7.8.x). Only an
   // unset key falls back to the built-in "code".
-  "default_agent": "quick",
+  "default_agent": "max",
 
-  // Cheap default. Each agent pins its own model in its frontmatter
-  // (~/.config/kilo/agents/*.md): quick and the gemini-coder subagent on
-  // google/gemini-3.8-flash, boss on anthropic/claude-opus-5-5, argon on
-  // google/gemini-4-argon, carbon on google/gemini-4-carbon.
-  "model": "google/gemini-3.8-flash",
-  "small_model": "google/gemini-3.8-flash",
+  // max omits `model:` in its frontmatter so `/models` (ctrl+x m) and
+  // `ctrl+t` selections persist in ~/.local/share/kilo/storage/model.json;
+  // before any pick is saved, max falls back to `model` here. quick, coder,
+  // and the built-in subagent/utility roles below run on
+  // google/gemini-4-hydrogen at `variant: "high"`.
+  "model": "google/gemini-4-hydrogen",
+  "small_model": "google/gemini-4-hydrogen",
+  "subagent_model": "google/gemini-4-hydrogen",
+  "subagent_variant": "high",
   "instructions": ["~/.config/kilo/instructions.md"],
 
   // Enables the `websearch` tool. NOT provider-native, and not billed to the
@@ -27,28 +30,17 @@
 
   // Own API keys only - no Kilo gateway/account. Keys live in user-scope
   // env vars, never in this file.
+  // `disabled_providers: ["kilo"]` hides the unauthenticated Kilo Gateway
+  // while letting every BYOK, cloud, or local provider (`google`,
+  // `anthropic`, `openai`, `openrouter`, `xai`, `deepseek`,
+  // `amazon-bedrock`, or custom `provider` blocks) auto-enable whenever its
+  // env var, `kilo auth` entry, or custom config is present.
+  // Pin `google` to `GOOGLE_GENERATIVE_AI_API_KEY` so an optional
+  // `GEMINI_API_KEY` set for `kopipasta ask` cannot shadow it.
   "provider": {
-    "google": { "env": ["GOOGLE_GENERATIVE_AI_API_KEY"] },
-    // Live for @boss (anthropic/claude-opus-5-5).
-    //
-    // baseURL is pinned because kilo 7.4.23 builds the anthropic URL without
-    // /v1: requests go to api.anthropic.com/messages, which does not exist,
-    // so every model on this provider dies with a bare 404 "Not Found"
-    // (kilo.db's AI_APICallError records carry the bad URL; the identical
-    // request replayed at /v1/messages returns 200). The SDK appends
-    // /messages to this value. Google is unaffected. Not re-verified on the
-    // later pins (7.5.16 -> 7.8.18) - harmless on versions that build the
-    // URL correctly.
-    "anthropic": {
-      "options": {
-        "baseURL": "https://api.anthropic.com/v1",
-        "apiKey": "{env:ANTHROPIC_API_KEY}"
-      }
-    }
-    // The openai and amazon-bedrock providers were removed on 2026-11-04,
-    // once no agent used them; git history (21c10d7) keeps their blocks.
+    "google": { "env": ["GOOGLE_GENERATIVE_AI_API_KEY"] }
   },
-  "enabled_providers": ["google", "anthropic"],
+  "disabled_providers": ["kilo"],
 
   "formatter": true,
   "lsp": true,
@@ -57,16 +49,15 @@
   // copy it; pins and licenses in skills/vendor.psd1). Interview skills
   // are gated in permission.skill below.
 
-  // Pin the built-in subagents and title/summary/compaction jobs to the
-  // cheap model. Compaction fires routinely at the 40% threshold below, so
-  // it should be fast and cheap; plan files and commits carry the durable
-  // state.
+  // Pin the built-in subagents and title/summary/compaction jobs to
+  // Gemini 4 Hydrogen at high thinking. Compaction fires routinely at the
+  // 40% threshold below; plan files and commits carry the durable state.
   "agent": {
-    "explore": { "model": "google/gemini-3.8-flash" },
-    "general": { "model": "google/gemini-3.8-flash" },
-    "title": { "model": "google/gemini-3.8-flash" },
-    "summary": { "model": "google/gemini-3.8-flash" },
-    "compaction": { "model": "google/gemini-3.8-flash" },
+    "explore": { "model": "google/gemini-4-hydrogen", "variant": "high" },
+    "general": { "model": "google/gemini-4-hydrogen", "variant": "high" },
+    "title": { "model": "google/gemini-4-hydrogen", "variant": "high" },
+    "summary": { "model": "google/gemini-4-hydrogen", "variant": "high" },
+    "compaction": { "model": "google/gemini-4-hydrogen", "variant": "high" },
     // Kilo's deprecated built-in orchestrator: it hijacked a run once with
     // generic delegation. Keep it off.
     "orchestrator": { "disable": true }
@@ -100,8 +91,7 @@
   // Codebase indexing -> the `semantic_search` tool: persistent, per-project
   // repo understanding every agent shares, instead of each subagent
   // re-deriving "where is X" at full price. Gemini embeddings (same
-  // GOOGLE_GENERATIVE_AI_API_KEY, via {env:} substitution - the mechanism
-  // is proven by the anthropic and firecrawl blocks in this file; only
+  // GOOGLE_GENERATIVE_AI_API_KEY, via {env:} substitution - only
   // snippets are sent, never whole files) into LanceDB, which is embedded
   // and file-based - no server. Docs:
   // https://kilo.ai/docs/customize/context/codebase-indexing
@@ -130,9 +120,9 @@
     "doom_loop": "deny",
 
     // Interview skills ask the user and wait on decisions, so only the
-    // attended primaries (quick, boss, argon, carbon) re-allow them in their own
+    // attended primaries (max, quick) re-allow them in their own
     // frontmatter. Kilo ignores the upstream disable-model-invocation flag
-    // (absent from the 7.8.18 binary); a denied skill is withheld from
+    // (absent from the 7.8.27 binary); a denied skill is withheld from
     // <available_skills>, so permission is the only gate.
     "skill": { "*": "allow", "grilling": "deny", "grill-with-docs": "deny" },
 
