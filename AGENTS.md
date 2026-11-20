@@ -57,6 +57,12 @@ do not re-derive.
   `config/kilo.jsonc` (a missing default agent aborts every run), the
   `permission.task` lists of the agents that dispatch it, the installers'
   expected-roster lines, and the README.
+- Prompts and standing instructions are model-agnostic: never put model or
+  vendor names in `config/instructions.md` or in `config/agents/*.md`
+  descriptions and prompt bodies. Never set `model:` on
+  `config/agents/max.md`: in Kilo 7.8.x (`packages/tui/src/context/local.tsx`,
+  `apply(a.name, model, !a.model)`), an agent with `model:` set drops TUI
+  `/models` choices instead of persisting them in `model.json`.
 - Commits go straight to `main`, one commit per task, message style per
   `git log` (`feat:`, `fix:`, `docs:`, `chore:`, `agents:`). Push only
   when asked.

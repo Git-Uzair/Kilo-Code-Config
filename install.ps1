@@ -5,15 +5,13 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 # Pin history: 7.4.22 -> 7.5.16 (2026-09-09) -> 7.7.1 (2026-09-15) ->
-# 7.8.1 (2026-09-26) -> 7.8.18 (2026-11-04). Re-verified on 7.8.18: the
-# grep tool returns past its 100-match cap (the Windows hang is gone),
-# Claude models get their full output limit (the 32k cap now binds only
-# other providers), and a custom agent's edit/bash rules no longer cap
-# the subagents it starts. The other 7.4.x-era workarounds (the anthropic
-# baseURL pin, the steps-cap and turn-control denies) are NOT re-verified;
-# each is harmless on a version that fixed the underlying bug, so all are
-# kept.
-$pin = '7.8.18'
+# 7.8.1 (2026-09-26) -> 7.8.18 (2026-11-04) -> 7.8.27 (2026-11-19).
+# Re-verified on 7.8.27: TUI `/models` choices persist for agents without
+# `model:` (`packages/tui/src/context/local.tsx`), Anthropic uses `/v1`
+# natively without a `baseURL` override, `google/gemini-4-hydrogen` at
+# `variant: high` resolves cleanly on custom and built-in agents, and the
+# 7.8.20 compaction-threshold and 7.8.23 multi-pane/wakeup fixes are live.
+$pin = '7.8.27'
 # MCP servers that kilo.jsonc launches by name (mcp.firecrawl,
 # mcp.playwright), pinned beside the CLI and verified with it 2026-11-04.
 $mcpPins = @('firecrawl-mcp@3.36.1', '@playwright/mcp@0.0.84')
@@ -184,10 +182,11 @@ else {
 Write-Host ""
 Write-Host "== Set your API keys (user scope, new terminals pick them up) ==" -ForegroundColor Yellow
 Write-Host '  [Environment]::SetEnvironmentVariable("GOOGLE_GENERATIVE_AI_API_KEY","<your-google-key>","User")'
-Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<anthropic-key-for-boss>","User")'
+Write-Host '  [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY","<optional-anthropic-key>","User")'
+Write-Host '  [Environment]::SetEnvironmentVariable("OPENAI_API_KEY","<optional-openai-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY","<optional-firecrawl-key>","User")'
 Write-Host '  [Environment]::SetEnvironmentVariable("GEMINI_API_KEY","<optional-key-for-kopipasta-ask>","User")'
-Write-Host "  (ANTHROPIC_API_KEY is needed for @boss only; the Google key runs everything else)"
+Write-Host "  (Google key runs the Hydrogen defaults; any provider key or 'kilo auth' unlocks its models in /models for max)"
 Write-Host "  (kopipasta ask only - map and ask --dry-run cost nothing and need no key)"
 Write-Host "  (no Firecrawl key? remove the mcp.firecrawl block from ~/.config/kilo/kilo.jsonc)"
 Write-Host ""
@@ -211,6 +210,6 @@ kilo mcp list | ForEach-Object { $_ -replace '\x1b\[[0-9;]*m', '' } |
     Select-String -Pattern '\b(firecrawl|playwright)\s+(\w+)' |
     ForEach-Object { "  $($_.Matches[0].Groups[1].Value): $($_.Matches[0].Groups[2].Value)" }
 Write-Host ""
-Write-Host "Done. Expected custom agents: quick (default), boss, argon, carbon, gemini-coder."
+Write-Host "Done. Expected custom agents: max (default), quick, coder."
 Write-Host "      Expected MCP servers: firecrawl and playwright, both connected."
-Write-Host "Try:  kilo   (opens the TUI in quick; Tab cycles to boss, argon, and carbon)"
+Write-Host "Try:  kilo   (opens the TUI in max; /models picks any frontier model, Tab switches to quick)"
